@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConexaoRouteImport } from './routes/conexao'
+import { Route as EventosRouteImport } from './routes/eventos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const ConexaoRoute = ConexaoRouteImport.update({
   path: '/conexao',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventosRoute = EventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/conexao': typeof ConexaoRoute
+  '/eventos': typeof EventosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/conexao': typeof ConexaoRoute
+  '/eventos': typeof EventosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/conexao': typeof ConexaoRoute
+  '/eventos': typeof EventosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/conexao'
+  fullPaths: '/' | '/conexao' | '/eventos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/conexao'
-  id: '__root__' | '/' | '/conexao'
+  to: '/' | '/conexao' | '/eventos'
+  id: '__root__' | '/' | '/conexao' | '/eventos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConexaoRoute: typeof ConexaoRoute
+  EventosRoute: typeof EventosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConexaoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/eventos': {
+      id: '/eventos'
+      path: '/eventos'
+      fullPath: '/eventos'
+      preLoaderRoute: typeof EventosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConexaoRoute: ConexaoRoute,
+  EventosRoute: EventosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
