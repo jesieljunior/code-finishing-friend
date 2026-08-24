@@ -1,127 +1,59 @@
-# PayCrew — Frontend (Lovable) sobre o backend FastAPI
+# PayCrew — ETAPA 1: Fundação do frontend sobre o FastAPI existente
 
-Decisão arquitetural aceita: o FastAPI existente é o backend oficial e a única
-fonte de verdade. O Lovable constrói apenas o frontend React/TypeScript, que
-consome a API REST. Nada de banco, cálculo de horas, fechamento ou pagamento
-duplicado aqui.
+Somente a ETAPA 1. Nenhuma tela de cadastro, evento, operação, fechamento ou financeiro será construída agora.
 
-## Objetivo desta entrega
+## O que será construído
 
-Entregar o ciclo completo demonstrável, com todas as regras vindo da API:
+1. **Configuração de API por ambiente** — `VITE_API_BASE_URL`, sem URL hardcoded. Se a variável não estiver definida, a aplicação mostra um aviso claro de configuração pendente em vez de falhar em silêncio.
+2. **Camada `src/api/`** — cliente HTTP único (fetch tipado), tratamento padronizado de erro (rede, CORS, 4xx com `detail` do FastAPI, 5xx), timeout e parse de resposta.
+3. **Tipos TypeScript espelhando os schemas reais** — enums do backend (`StatusEvento`, `StatusEscala`, `StatusPonto`, `StatusFechamento`, `StatusPagamento`, `TipoValor`, `TipoPonto`, `MetodoCheck`, `PapelUsuario`) copiados exatamente como estão em `app/enums.py`. Nenhum campo inventado.
+4. **Estrutura de autenticação preparada para JWT** — um `AuthProvider` que guarda sessão (usuário, papel, empresa, token) e um interceptor que injeta `Authorization: Bearer` quando houver token. Como o backend ainda não tem `/auth/login`, a sessão inicial é selecionada localmente (empresa + usuário/papel) apenas como *compatibilidade temporária, explicitamente marcada no código*. Quando o endpoint real existir, só a função `login()` muda.
+5. **Estrutura de permissões** — mapa de papéis (admin, coordenador, financeiro, supervisor) usado apenas para esconder/desabilitar UI. A autorização real continua sendo do backend.
+6. **TanStack Query** — QueryClient já existente, chaves por entidade e padrão de invalidação documentado.
+7. **Layout e navegação base** — shell responsivo (sidebar no desktop, barra inferior no mobile) com as seções do ciclo: Eventos, Clientes, Freelancers, Operação, Fechamento, Financeiro, Relatórios, Configurações. As páginas ficam como placeholders explícitos "ETAPA N" — sem dados falsos.
+8. **Design system operacional** — tokens no `src/styles.css`: densidade alta, tipografia legível, badges de status consistentes para pendente / confirmado / recusado / em andamento / aprovado / falhou / pago. Sem gradientes decorativos.
+9. **Estados base reutilizáveis** — loading (skeleton), erro (com mensagem da API e ação de repetir), vazio.
+10. **Tela de diagnóstico de conexão** (`/conexao`) — chama `GET /health` na API configurada e mostra: URL usada, status, latência e, em caso de falha, se é rede, CORS ou erro do servidor. É a validação da fundação antes da ETAPA 2.
 
-agência → cliente → freelancers → evento → equipe → supervisor → escala →
-confirmação → check-in → check-out → cálculo → aprovação do supervisor →
-aprovação do financeiro → agendamento → Pix simulado → pagamento concluído.
+## Endpoints encontrados no backend
 
-## Conexão com a API
+- `GET /health`
+- Empresas: `POST /empresas`, `GET /empresas/{id}`, `PATCH /empresas/{id}`, `GET|PATCH /empresas/{id}/configuracoes`
+- Clientes: `POST /clientes`, `GET /clientes`, `GET|PATCH /clientes/{id}`
+- Freelancers: `POST /freelancers`, `GET /freelancers`, `GET|PATCH /freelancers/{id}`
+- Eventos: `POST /eventos`, `GET|PATCH /eventos/{id}`, `POST /eventos/{id}/marcar-pronto|encerrar|arquivar|cancelar`, `POST|GET /eventos/{id}/equipes`
+- Escalas: `POST /escalas`, `GET /escalas/{id}`, `POST /escalas/{id}/confirmar|recusar|substituir`
+- Operação: `POST /checkin`, `POST /checkout`, `POST /pontos/{id}/aprovar`
+- Fechamento: `POST /fechar-evento/{evento_id}`, `GET /fechamentos/{id}`, `POST /fechamentos/{id}/aprovar`
+- Pagamentos: `GET /pagamentos`, `GET /pagamentos/{id}`, `POST /pagamentos/{id}/agendar`
+- Webhooks: `POST /webhooks/parceiro-financeiro`
+- Relatórios: `GET /relatorios/{evento_id}`
 
-- Uma variável de configuração `VITE_API_BASE_URL` aponta para o FastAPI
-  (local durante o desenvolvimento, servidor real depois).
-- Cliente HTTP único, com token de autenticação, tratamento de erro
-  padronizado (mensagens da API exibidas ao usuário) e estados de
-  carregando/erro/vazio em todas as telas.
-- Enquanto a API não estiver acessível pelo preview, as telas mostram o erro
-  de conexão de forma clara — o frontend não inventa dados.
+## Ausências e divergências já identificadas (bloqueiam etapas futuras)
 
-Observação: o backend precisa liberar CORS para o domínio do preview e do app
-publicado, e hoje ainda não tem autenticação (os endpoints recebem
-`supervisor_id`/`coordenador_id` por query param). O frontend será escrito
-esperando login com token; enquanto o backend não tiver auth, uso um modo de
-compatibilidade que envia esses parâmetros.
+Estas serão registradas como pendências no projeto, não contornadas no frontend:
 
-## Telas
-
-**Acesso**
-- Login (e-mail/senha), seleção de contexto da agência, logout.
-- Navegação e permissões visuais por papel: Admin, Coordenador, Financeiro,
-  Supervisor. O frontend só esconde o que o papel não usa; a autorização real
-  é do backend.
-
-**Cadastros**
-- Clientes: lista, criar, editar, observações.
-- Freelancers: lista com busca e filtro, criar/editar (nome, CPF, telefone,
-  chave Pix, função, ativo), importação por planilha (envio à API).
-- Configurações da agência: liga/desliga selfie, GPS, confirmação de presença,
-  substituição e ocorrências (consumindo o módulo de Configurações).
-
-**Eventos**
-- Lista com filtro por status e cliente.
-- Criar/editar evento (nome, cliente, local, datas).
-- Detalhe do evento com a linha do tempo dos estados (Planejamento → Escala →
-  Confirmações → Pronto → Em execução → Encerrando → Fechamento → Pagamento →
-  Concluído → Arquivado) e botões que só avançam um passo, chamando os
-  endpoints de transição. Cancelamento disponível conforme a regra do backend.
-- Equipes do evento: criar, nomear, definir supervisor.
-- QR Code do evento gerado a partir do token que a API devolve.
-
-**Escala**
-- Escalar freelancers para uma equipe com valor combinado e tipo (diária/hora).
-- Ações: convidar, confirmar, recusar, substituir (quando habilitado).
-- Visão de status por pessoa.
-
-**Operação (mobile-first)**
-- Tela do freelancer para check-in/check-out, com duas formas de acesso
-  decididas pelo organizador:
-  1. Link/QR público do evento, identificação por CPF, sem senha;
-  2. Login próprio do freelancer.
-  A escolha vive nas configurações da agência.
-- Captura de selfie apenas pela câmera (sem galeria) e envio de GPS quando as
-  flags estiverem ligadas.
-- Painel do supervisor: "15 escalados / 12 presentes / 2 atrasados / 1
-  pendente", lista de pontos com aprovar/recusar e registro de ocorrências.
-
-**Fechamento**
-- Ação de fechar evento, lista de fechamentos por freelancer com horas e valor
-  calculados pela API, aprovação/contestação do coordenador.
-
-**Financeiro**
-- Resumo do evento: total de freelancers, total a pagar, aprovados, pendentes,
-  data de pagamento.
-- Lista de pagamentos com status (pendente → agendado → processando → pago /
-  falhou), agendamento de data e hora, acompanhamento do Pix simulado e acesso
-  ao comprovante e ao histórico para auditoria.
-
-**Relatórios**
-- Relatório final do evento com os números vindos de `/relatorios/{evento_id}`,
-  com exportação em CSV do que a API retornar.
-
-Fora do escopo agora: landing page, IA, analytics avançado, WhatsApp,
-white-label, marketplace, API pública.
-
-## Identidade visual
-
-Aplicativo operacional, denso e legível, pensado para uso no celular durante o
-evento e no desktop no escritório: tipografia forte, contraste alto, estados de
-status por cor consistente (pendente, aprovado, recusado, pago), modo claro e
-escuro. Sem visual genérico roxo/gradiente.
+1. **Sem autenticação** — não existe `/auth/login`, `/auth/me` nem middleware de sessão. Papel e usuário hoje só chegam por parâmetro (ex.: `supervisor_id`).
+2. **Sem CORS** — `main.py` não registra `CORSMiddleware`. Sem isso o preview do Lovable não conseguirá chamar a API pelo navegador. É a dependência número 1 para a ETAPA 2.
+3. **Sem listagem de eventos** — existe `GET /eventos/{id}`, mas não `GET /eventos`. A tela "Lista de eventos" da ETAPA 3 depende disso.
+4. **Sem listagem de escalas por evento/equipe/freelancer** — só `GET /escalas/{id}`. Necessário para ETAPA 4 e para a visão do supervisor.
+5. **Sem listagem de pontos** — só criação e aprovação. A visão de presentes/ausentes/atrasados da ETAPA 5 depende de um endpoint de leitura.
+6. **Sem listagem de fechamentos por evento** — só `GET /fechamentos/{id}`.
+7. **Sem contestação de fechamento** — existe o status `contestado`, mas não há endpoint para contestar (ETAPA 6).
+8. **Pagamento**: os estados do backend são `pendente | agendado | executado | falhou`; o fluxo descrito pelo produto usa "processando" e "pago". Divergência de nomenclatura — o frontend exibirá os estados reais do backend com rótulos em português e a diferença fica registrada.
+9. **Sem endpoint de aprovação financeira separada** — só `POST /pagamentos/{id}/agendar`.
+10. **Sem endpoint de QR Code do evento** e sem upload de selfie (o schema de ponto aceita referência de foto, não o arquivo). A ser confirmado na ETAPA 5.
+11. **Sem listagem de empresas/usuários** — a empresa atual precisará ser informada manualmente até existir autenticação.
 
 ## Detalhes técnicos
 
-- TanStack Start + React + TypeScript + Tailwind + shadcn/ui.
-- TanStack Query para todas as leituras e mutações contra o FastAPI, com
-  invalidação por evento/equipe/escala após cada ação.
-- Camada `src/api/` espelhando os routers existentes: empresas, configurações,
-  clientes, freelancers, eventos, equipes, escalas, operação, fechamento,
-  pagamentos, relatórios. Tipos TypeScript derivados dos schemas Pydantic.
-- Rotas protegidas por papel apenas para navegação; validação de formulário
-  com Zod refletindo as regras dos schemas (CPF/CNPJ, datas, selfie exige
-  foto), sem substituir a validação do backend.
-- Nenhuma tabela nem função de negócio criada no Lovable Cloud.
+- `src/api/client.ts`: `request()` genérico, `ApiError` com `status`, `detail`, `kind: 'network' | 'cors' | 'http'`; base URL de `import.meta.env.VITE_API_BASE_URL`.
+- `src/api/types.ts`: enums e DTOs derivados dos schemas Pydantic.
+- `src/api/keys.ts`: chaves de query por entidade.
+- `src/auth/`: `AuthProvider`, `useAuth`, `session.ts` (persistência em localStorage lida em `useEffect` para evitar mismatch de hidratação), `permissions.ts`.
+- Todas as chamadas partem do cliente (browser) via TanStack Query; nada de server functions chamando a API, para manter uma única fonte de verdade e deixar o CORS explícito.
+- Rotas TanStack em `src/routes/`, com `head()` próprio por rota.
 
-## O que preciso de você
+## Ao final da ETAPA 1
 
-1. A URL onde o FastAPI vai rodar/estar acessível para o preview.
-2. Confirmar se posso assumir que o backend ganhará login com token (JWT) —
-   e, se sim, qual endpoint (`/auth/login`), ou se sigo pelo modo de
-   compatibilidade por enquanto.
-
-Se preferir, começo pelas telas e pela camada de API e ligamos a URL depois.
-
-## Entrega em etapas
-
-1. Base: design system, layout, cliente de API, login e navegação por papel.
-2. Cadastros: clientes, freelancers, configurações.
-3. Eventos, equipes e escala, com a máquina de estados.
-4. Operação: check-in/out, QR, selfie/GPS, painel do supervisor.
-5. Fechamento e aprovações.
-6. Financeiro, Pix simulado, comprovantes e relatórios.
+Apresento: o que foi implementado, o resultado real do teste de conexão contra `VITE_API_BASE_URL`, a lista de endpoints ausentes acima e as dependências (CORS + listagens) a resolver antes da ETAPA 2. Não avanço sem sua validação.
