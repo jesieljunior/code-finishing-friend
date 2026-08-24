@@ -10,33 +10,154 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClientesRouteImport } from './routes/clientes'
+import { Route as ConexaoRouteImport } from './routes/conexao'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as EventosRouteImport } from './routes/eventos'
+import { Route as FechamentoRouteImport } from './routes/fechamento'
+import { Route as FinanceiroRouteImport } from './routes/financeiro'
+import { Route as FreelancersRouteImport } from './routes/freelancers'
+import { Route as OperacaoRouteImport } from './routes/operacao'
+import { Route as RelatoriosRouteImport } from './routes/relatorios'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClientesRoute = ClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConexaoRoute = ConexaoRouteImport.update({
+  id: '/conexao',
+  path: '/conexao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventosRoute = EventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FechamentoRoute = FechamentoRouteImport.update({
+  id: '/fechamento',
+  path: '/fechamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceiroRoute = FinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreelancersRoute = FreelancersRouteImport.update({
+  id: '/freelancers',
+  path: '/freelancers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperacaoRoute = OperacaoRouteImport.update({
+  id: '/operacao',
+  path: '/operacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RelatoriosRoute = RelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/clientes': typeof ClientesRoute
+  '/conexao': typeof ConexaoRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/eventos': typeof EventosRoute
+  '/fechamento': typeof FechamentoRoute
+  '/financeiro': typeof FinanceiroRoute
+  '/freelancers': typeof FreelancersRoute
+  '/operacao': typeof OperacaoRoute
+  '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/clientes': typeof ClientesRoute
+  '/conexao': typeof ConexaoRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/eventos': typeof EventosRoute
+  '/fechamento': typeof FechamentoRoute
+  '/financeiro': typeof FinanceiroRoute
+  '/freelancers': typeof FreelancersRoute
+  '/operacao': typeof OperacaoRoute
+  '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/clientes': typeof ClientesRoute
+  '/conexao': typeof ConexaoRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/eventos': typeof EventosRoute
+  '/fechamento': typeof FechamentoRoute
+  '/financeiro': typeof FinanceiroRoute
+  '/freelancers': typeof FreelancersRoute
+  '/operacao': typeof OperacaoRoute
+  '/relatorios': typeof RelatoriosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/clientes'
+    | '/conexao'
+    | '/configuracoes'
+    | '/eventos'
+    | '/fechamento'
+    | '/financeiro'
+    | '/freelancers'
+    | '/operacao'
+    | '/relatorios'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/clientes'
+    | '/conexao'
+    | '/configuracoes'
+    | '/eventos'
+    | '/fechamento'
+    | '/financeiro'
+    | '/freelancers'
+    | '/operacao'
+    | '/relatorios'
+  id:
+    | '__root__'
+    | '/'
+    | '/clientes'
+    | '/conexao'
+    | '/configuracoes'
+    | '/eventos'
+    | '/fechamento'
+    | '/financeiro'
+    | '/freelancers'
+    | '/operacao'
+    | '/relatorios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClientesRoute: typeof ClientesRoute
+  ConexaoRoute: typeof ConexaoRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
+  EventosRoute: typeof EventosRoute
+  FechamentoRoute: typeof FechamentoRoute
+  FinanceiroRoute: typeof FinanceiroRoute
+  FreelancersRoute: typeof FreelancersRoute
+  OperacaoRoute: typeof OperacaoRoute
+  RelatoriosRoute: typeof RelatoriosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +169,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clientes': {
+      id: '/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof ClientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conexao': {
+      id: '/conexao'
+      path: '/conexao'
+      fullPath: '/conexao'
+      preLoaderRoute: typeof ConexaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eventos': {
+      id: '/eventos'
+      path: '/eventos'
+      fullPath: '/eventos'
+      preLoaderRoute: typeof EventosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fechamento': {
+      id: '/fechamento'
+      path: '/fechamento'
+      fullPath: '/fechamento'
+      preLoaderRoute: typeof FechamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/financeiro': {
+      id: '/financeiro'
+      path: '/financeiro'
+      fullPath: '/financeiro'
+      preLoaderRoute: typeof FinanceiroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/freelancers': {
+      id: '/freelancers'
+      path: '/freelancers'
+      fullPath: '/freelancers'
+      preLoaderRoute: typeof FreelancersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operacao': {
+      id: '/operacao'
+      path: '/operacao'
+      fullPath: '/operacao'
+      preLoaderRoute: typeof OperacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/relatorios': {
+      id: '/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClientesRoute: ClientesRoute,
+  ConexaoRoute: ConexaoRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
+  EventosRoute: EventosRoute,
+  FechamentoRoute: FechamentoRoute,
+  FinanceiroRoute: FinanceiroRoute,
+  FreelancersRoute: FreelancersRoute,
+  OperacaoRoute: OperacaoRoute,
+  RelatoriosRoute: RelatoriosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
