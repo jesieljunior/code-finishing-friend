@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as ConexaoRouteImport } from './routes/conexao'
 import { Route as EventosRouteImport } from './routes/eventos'
 import { Route as FechamentoRouteImport } from './routes/fechamento'
@@ -19,6 +20,11 @@ import { Route as OperacaoRouteImport } from './routes/operacao'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientesRoute = ClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConexaoRoute = ConexaoRouteImport.update({
@@ -49,6 +55,7 @@ const OperacaoRoute = OperacaoRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/clientes': typeof ClientesRoute
   '/conexao': typeof ConexaoRoute
   '/eventos': typeof EventosRoute
   '/fechamento': typeof FechamentoRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/clientes': typeof ClientesRoute
   '/conexao': typeof ConexaoRoute
   '/eventos': typeof EventosRoute
   '/fechamento': typeof FechamentoRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/clientes': typeof ClientesRoute
   '/conexao': typeof ConexaoRoute
   '/eventos': typeof EventosRoute
   '/fechamento': typeof FechamentoRoute
@@ -75,13 +84,26 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/conexao' | '/eventos' | '/fechamento' | '/financeiro' | '/operacao'
+    | '/'
+    | '/clientes'
+    | '/conexao'
+    | '/eventos'
+    | '/fechamento'
+    | '/financeiro'
+    | '/operacao'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/conexao' | '/eventos' | '/fechamento' | '/financeiro' | '/operacao'
+    | '/'
+    | '/clientes'
+    | '/conexao'
+    | '/eventos'
+    | '/fechamento'
+    | '/financeiro'
+    | '/operacao'
   id:
     | '__root__'
     | '/'
+    | '/clientes'
     | '/conexao'
     | '/eventos'
     | '/fechamento'
@@ -91,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClientesRoute: typeof ClientesRoute
   ConexaoRoute: typeof ConexaoRoute
   EventosRoute: typeof EventosRoute
   FechamentoRoute: typeof FechamentoRoute
@@ -105,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clientes': {
+      id: '/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof ClientesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conexao': {
@@ -147,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClientesRoute: ClientesRoute,
   ConexaoRoute: ConexaoRoute,
   EventosRoute: EventosRoute,
   FechamentoRoute: FechamentoRoute,
