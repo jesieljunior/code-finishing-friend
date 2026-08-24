@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConexaoRouteImport } from './routes/conexao'
 import { Route as EventosRouteImport } from './routes/eventos'
+import { Route as OperacaoRouteImport } from './routes/operacao'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const EventosRoute = EventosRouteImport.update({
   path: '/eventos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperacaoRoute = OperacaoRouteImport.update({
+  id: '/operacao',
+  path: '/operacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/conexao': typeof ConexaoRoute
   '/eventos': typeof EventosRoute
+  '/operacao': typeof OperacaoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/conexao': typeof ConexaoRoute
   '/eventos': typeof EventosRoute
+  '/operacao': typeof OperacaoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/conexao': typeof ConexaoRoute
   '/eventos': typeof EventosRoute
+  '/operacao': typeof OperacaoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/conexao' | '/eventos'
+  fullPaths: '/' | '/conexao' | '/eventos' | '/operacao'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/conexao' | '/eventos'
-  id: '__root__' | '/' | '/conexao' | '/eventos'
+  to: '/' | '/conexao' | '/eventos' | '/operacao'
+  id: '__root__' | '/' | '/conexao' | '/eventos' | '/operacao'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConexaoRoute: typeof ConexaoRoute
   EventosRoute: typeof EventosRoute
+  OperacaoRoute: typeof OperacaoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operacao': {
+      id: '/operacao'
+      path: '/operacao'
+      fullPath: '/operacao'
+      preLoaderRoute: typeof OperacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConexaoRoute: ConexaoRoute,
   EventosRoute: EventosRoute,
+  OperacaoRoute: OperacaoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
