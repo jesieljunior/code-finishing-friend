@@ -142,3 +142,109 @@
     color: var(--color-foreground);
   }
 }
+
+/* ---------------------------------------------------------------
+ * PayCrew — tokens operacionais.
+ * Interface densa, alto contraste, sem gradiente decorativo.
+ * Cores de status usadas por <StatusBadge>.
+ * --------------------------------------------------------------- */
+
+@theme inline {
+  --color-status-neutro: var(--status-neutro);
+  --color-status-neutro-foreground: var(--status-neutro-foreground);
+  --color-status-pendente: var(--status-pendente);
+  --color-status-pendente-foreground: var(--status-pendente-foreground);
+  --color-status-ok: var(--status-ok);
+  --color-status-ok-foreground: var(--status-ok-foreground);
+  --color-status-ativo: var(--status-ativo);
+  --color-status-ativo-foreground: var(--status-ativo-foreground);
+  --color-status-erro: var(--status-erro);
+  --color-status-erro-foreground: var(--status-erro-foreground);
+  --color-status-pago: var(--status-pago);
+  --color-status-pago-foreground: var(--status-pago-foreground);
+}
+
+:root {
+  --radius: 0.375rem;
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.21 0.02 255);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.02 255);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.02 255);
+  --primary: oklch(0.46 0.14 250);
+  --primary-foreground: oklch(0.99 0.002 250);
+  --secondary: oklch(0.955 0.005 250);
+  --secondary-foreground: oklch(0.3 0.02 255);
+  --muted: oklch(0.955 0.005 250);
+  --muted-foreground: oklch(0.5 0.02 255);
+  --accent: oklch(0.94 0.012 250);
+  --accent-foreground: oklch(0.28 0.03 255);
+  --destructive: oklch(0.55 0.2 27);
+  --destructive-foreground: oklch(0.99 0.002 250);
+  --border: oklch(0.9 0.008 250);
+  --input: oklch(0.9 0.008 250);
+  --ring: oklch(0.46 0.14 250);
+  --sidebar: oklch(0.235 0.022 258);
+  --sidebar-foreground: oklch(0.93 0.005 250);
+  --sidebar-primary: oklch(0.6 0.14 250);
+  --sidebar-primary-foreground: oklch(0.99 0.002 250);
+  --sidebar-accent: oklch(0.3 0.025 258);
+  --sidebar-accent-foreground: oklch(0.98 0.002 250);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.6 0.14 250);
+
+  --status-neutro: oklch(0.94 0.006 250);
+  --status-neutro-foreground: oklch(0.4 0.02 255);
+  --status-pendente: oklch(0.94 0.07 85);
+  --status-pendente-foreground: oklch(0.42 0.11 70);
+  --status-ok: oklch(0.93 0.06 155);
+  --status-ok-foreground: oklch(0.4 0.1 155);
+  --status-ativo: oklch(0.93 0.05 250);
+  --status-ativo-foreground: oklch(0.42 0.13 250);
+  --status-erro: oklch(0.94 0.05 25);
+  --status-erro-foreground: oklch(0.47 0.17 27);
+  --status-pago: oklch(0.9 0.09 160);
+  --status-pago-foreground: oklch(0.35 0.1 160);
+}
+
+.dark {
+  --background: oklch(0.19 0.02 258);
+  --foreground: oklch(0.96 0.003 250);
+  --card: oklch(0.235 0.022 258);
+  --card-foreground: oklch(0.96 0.003 250);
+  --popover: oklch(0.235 0.022 258);
+  --popover-foreground: oklch(0.96 0.003 250);
+  --primary: oklch(0.68 0.13 250);
+  --primary-foreground: oklch(0.18 0.02 258);
+  --secondary: oklch(0.29 0.022 258);
+  --secondary-foreground: oklch(0.96 0.003 250);
+  --muted: oklch(0.29 0.022 258);
+  --muted-foreground: oklch(0.72 0.015 255);
+  --accent: oklch(0.32 0.025 258);
+  --accent-foreground: oklch(0.97 0.003 250);
+  --destructive: oklch(0.65 0.18 25);
+  --destructive-foreground: oklch(0.98 0.002 250);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.68 0.13 250);
+
+  --status-neutro: oklch(0.32 0.02 258);
+  --status-neutro-foreground: oklch(0.85 0.01 250);
+  --status-pendente: oklch(0.36 0.07 75);
+  --status-pendente-foreground: oklch(0.9 0.1 85);
+  --status-ok: oklch(0.33 0.06 155);
+  --status-ok-foreground: oklch(0.88 0.11 155);
+  --status-ativo: oklch(0.33 0.07 250);
+  --status-ativo-foreground: oklch(0.85 0.1 250);
+  --status-erro: oklch(0.34 0.09 25);
+  --status-erro-foreground: oklch(0.87 0.11 25);
+  --status-pago: oklch(0.36 0.09 160);
+  --status-pago-foreground: oklch(0.9 0.12 160);
+}
+
+@layer base {
+  body {
+    font-variant-numeric: tabular-nums;
+  }
+}
