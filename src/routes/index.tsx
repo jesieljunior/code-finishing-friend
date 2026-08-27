@@ -1,179 +1,100 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { ArrowRight, CalendarDays, QrCode, Wallet } from "lucide-react";
 
-import { api } from "@/api/endpoints";
-import { isApiConfigured, API_BASE_URL } from "@/api/config";
-import { queryKeys } from "@/api/keys";
-import { useAuth } from "@/auth/AuthProvider";
-import { AppShell } from "@/components/app-shell";
-import { ErrorState, LoadingBloco } from "@/components/states";
 import { Button } from "@/components/ui/button";
-import { ORDEM_STATUS_EVENTO } from "@/api/types";
-import { StatusBadge } from "@/components/status-badge";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (data.user) throw redirect({ to: "/painel" });
+  },
   head: () => ({
     meta: [
-      { title: "PayCrew — Operação e pagamento de equipes de eventos" },
+      { title: "PayCrew — Escala, ponto e pagamento de freelancers de eventos" },
       {
         name: "description",
         content:
-          "Painel do PayCrew: acompanhe eventos, escalas, operação em campo, fechamento de horas e pagamentos das equipes freelancers da sua agência.",
+          "Do cadastro do evento ao Pix do freelancer: escale a equipe, registre ponto por QR Code, feche as horas e pague — tudo em um só sistema.",
       },
       {
         property: "og:title",
-        content: "PayCrew — Operação e pagamento de equipes de eventos",
+        content: "PayCrew — Escala, ponto e pagamento de freelancers de eventos",
       },
       {
         property: "og:description",
         content:
-          "Do cadastro do evento ao Pix do freelancer: escala, check-in, fechamento de horas e pagamento em um só lugar.",
+          "Sistema para agências de eventos gerenciarem equipes freelancers: escala, check-in em campo, fechamento de horas e pagamento.",
       },
     ],
   }),
-  component: VisaoGeral,
+  component: Landing,
 });
 
-function VisaoGeral() {
-  const { sessao, carregado } = useAuth();
+const BLOCOS = [
+  {
+    icone: CalendarDays,
+    titulo: "Evento e escala",
+    texto:
+      "Monte equipes, escale freelancers por diária ou por hora e acompanhe as confirmações.",
+  },
+  {
+    icone: QrCode,
+    titulo: "Ponto em campo",
+    texto:
+      "Check-in e check-out por QR Code, com selfie e localização quando a agência exigir.",
+  },
+  {
+    icone: Wallet,
+    titulo: "Fechamento e Pix",
+    texto:
+      "Horas líquidas calculadas dos pontos aprovados, aprovação e pagamento na chave Pix.",
+  },
+];
 
-  const empresa = useQuery({
-    queryKey: sessao ? queryKeys.empresa(sessao.empresaId) : ["empresa", "—"],
-    queryFn: () => api.empresas.obter(sessao!.empresaId),
-    enabled: Boolean(sessao) && isApiConfigured(),
-    retry: false,
-  });
-
-  const config = useQuery({
-    queryKey: sessao
-      ? queryKeys.configuracoes(sessao.empresaId)
-      : ["configuracoes", "—"],
-    queryFn: () => api.empresas.configuracoes(sessao!.empresaId),
-    enabled: Boolean(sessao) && isApiConfigured(),
-    retry: false,
-  });
-
+function Landing() {
   return (
-    <AppShell
-      titulo="Visão geral"
-      descricao="Fundação conectada ao FastAPI — etapas seguintes liberadas após validação"
-    >
-      {!isApiConfigured() ? (
-        <div className="rounded-md border border-border bg-card p-4">
-          <p className="text-sm font-medium text-foreground">
-            Falta a URL da API
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Defina <code>VITE_API_BASE_URL</code> apontando para o FastAPI do
-            PayCrew. Enquanto isso nenhuma tela busca dados.
-          </p>
-          <Button asChild size="sm" variant="outline" className="mt-3">
-            <Link to="/conexao">Abrir diagnóstico</Link>
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+          <span className="text-sm font-semibold tracking-tight">PayCrew</span>
+          <Button asChild size="sm">
+            <Link to="/auth">Entrar</Link>
           </Button>
         </div>
-      ) : !carregado ? (
-        <LoadingBloco linhas={3} />
-      ) : !sessao ? (
-        <div className="rounded-md border border-border bg-card p-4">
-          <p className="text-sm font-medium text-foreground">
-            Defina a sessão de trabalho
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            O backend ainda não tem autenticação. Informe o UUID da empresa e o
-            papel no botão do topo para o frontend saber o que consultar.
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <section className="rounded-md border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold text-foreground">Agência</h2>
-            <div className="mt-3">
-              {empresa.isPending ? (
-                <LoadingBloco linhas={2} />
-              ) : empresa.isError ? (
-                <ErrorState
-                  error={empresa.error}
-                  onRetry={() => empresa.refetch()}
-                />
-              ) : (
-                <dl className="space-y-2 text-sm">
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">Nome</dt>
-                    <dd className="font-medium">{empresa.data?.nome}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">CNPJ</dt>
-                    <dd className="font-medium">{empresa.data?.cnpj}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-muted-foreground">Situação</dt>
-                    <dd className="font-medium">
-                      {empresa.data?.ativa ? "Ativa" : "Inativa"}
-                    </dd>
-                  </div>
-                </dl>
-              )}
-            </div>
-          </section>
+      </header>
 
-          <section className="rounded-md border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold text-foreground">
-              Regras da operação
-            </h2>
-            <div className="mt-3">
-              {config.isPending ? (
-                <LoadingBloco linhas={3} />
-              ) : config.isError ? (
-                <ErrorState
-                  error={config.error}
-                  onRetry={() => config.refetch()}
-                />
-              ) : config.data ? (
-                <dl className="space-y-2 text-sm">
-                  {(
-                    [
-                      ["Check-in exige selfie", config.data.checkin_exige_selfie],
-                      ["Check-in exige GPS", config.data.checkin_exige_gps],
-                      [
-                        "Escala exige confirmação",
-                        config.data.escala_exige_confirmacao_presenca,
-                      ],
-                      ["Substituição habilitada", config.data.substituicao_habilitada],
-                      ["Ocorrências habilitadas", config.data.ocorrencias_habilitadas],
-                    ] as [string, boolean][]
-                  ).map(([label, valor]) => (
-                    <div key={label} className="flex justify-between gap-4">
-                      <dt className="text-muted-foreground">{label}</dt>
-                      <dd className="font-medium">{valor ? "Sim" : "Não"}</dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : null}
-            </div>
-          </section>
-        </div>
-      )}
-
-      <section className="mt-6 rounded-md border border-border bg-card p-4">
-        <h2 className="text-sm font-semibold text-foreground">
-          Ciclo do evento
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Estados exatamente como o backend define em{" "}
-          <code>ORDEM_STATUS_EVENTO</code>. O frontend não cria uma máquina de
-          estados própria.
+      <main className="mx-auto max-w-5xl px-4 py-16">
+        <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+          Do primeiro convite ao Pix do freelancer, sem planilha.
+        </h1>
+        <p className="mt-4 max-w-2xl text-base text-muted-foreground">
+          PayCrew é o sistema operacional das agências de eventos: escala da
+          equipe, ponto em campo, fechamento de horas e pagamento, no mesmo
+          fluxo.
         </p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {ORDEM_STATUS_EVENTO.map((status) => (
-            <StatusBadge key={status} status={status} />
-          ))}
-          <StatusBadge status="cancelado" />
-        </div>
-      </section>
+        <Button asChild className="mt-8">
+          <Link to="/auth">
+            Começar agora <ArrowRight className="size-4" />
+          </Link>
+        </Button>
 
-      <p className="mt-4 text-xs text-muted-foreground">
-        API: {isApiConfigured() ? API_BASE_URL : "não configurada"}
-      </p>
-    </AppShell>
+        <div className="mt-16 grid gap-4 sm:grid-cols-3">
+          {BLOCOS.map((b) => (
+            <section
+              key={b.titulo}
+              className="rounded-md border border-border bg-card p-4"
+            >
+              <b.icone className="size-5 text-primary" aria-hidden />
+              <h2 className="mt-3 text-sm font-semibold text-foreground">
+                {b.titulo}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">{b.texto}</p>
+            </section>
+          ))}
+        </div>
+      </main>
+    </div>
   );
 }
