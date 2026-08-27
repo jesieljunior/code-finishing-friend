@@ -222,3 +222,81 @@ const MATRIZ: Record<PapelUsuario, Capacidade[]> = {
 export function podeCom(papeis: PapelUsuario[], capacidade: Capacidade): boolean {
   return papeis.some((p) => MATRIZ[p]?.includes(capacidade));
 }
+
+export const ROTULO_STATUS_ESCALA: Record<StatusEscala, string> = {
+  convidado: "Convidado",
+  confirmado: "Confirmado",
+  recusado: "Recusado",
+  substituido: "Substituído",
+};
+
+export const ROTULO_STATUS_PONTO: Record<StatusPonto, string> = {
+  pendente: "Pendente",
+  aprovado: "Aprovado",
+  recusado: "Recusado",
+};
+
+export const ROTULO_STATUS_FECHAMENTO: Record<StatusFechamento, string> = {
+  pendente_aprovacao: "Pendente de aprovação",
+  aprovado: "Aprovado",
+  contestado: "Contestado",
+};
+
+export const ROTULO_STATUS_PAGAMENTO: Record<StatusPagamento, string> = {
+  pendente: "Pendente",
+  agendado: "Agendado",
+  executado: "Pago",
+  falhou: "Falhou",
+};
+
+export const ROTULO_TIPO_VALOR: Record<TipoValor, string> = {
+  diaria: "Diária",
+  hora: "Por hora",
+};
+
+export type Tom = "neutro" | "pendente" | "ok" | "ativo" | "erro" | "pago";
+
+export const TOM_POR_STATUS: Record<string, Tom> = {
+  planejamento: "neutro",
+  escala: "neutro",
+  confirmacoes: "pendente",
+  pronto: "ok",
+  em_execucao: "ativo",
+  encerrando: "ativo",
+  fechamento: "pendente",
+  pagamento: "pendente",
+  concluido: "pago",
+  arquivado: "neutro",
+  cancelado: "erro",
+  convidado: "pendente",
+  confirmado: "ok",
+  recusado: "erro",
+  substituido: "neutro",
+  pendente: "pendente",
+  aprovado: "ok",
+  pendente_aprovacao: "pendente",
+  contestado: "erro",
+  agendado: "ativo",
+  executado: "pago",
+  falhou: "erro",
+};
+
+export const ROTULO_STATUS: Record<string, string> = {
+  ...ROTULO_STATUS_EVENTO,
+  ...ROTULO_STATUS_ESCALA,
+  ...ROTULO_STATUS_FECHAMENTO,
+  ...ROTULO_STATUS_PAGAMENTO,
+  pendente: "Pendente",
+  aprovado: "Aprovado",
+  recusado: "Recusado",
+};
+
+export const soDigitos = (v: string) => v.replace(/\D+/g, "");
+
+export const formatarCpf = (v: string) => {
+  const d = soDigitos(v).slice(0, 11);
+  return d
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d{1,2})$/, ".$1-$2");
+};

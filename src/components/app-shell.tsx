@@ -1,11 +1,12 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
-  Banknote,
   Building2,
   CalendarDays,
   ClipboardCheck,
+  Contact,
   FileBarChart,
-  PlugZap,
+  LogOut,
   Radio,
   Settings,
   Users,
@@ -13,11 +14,11 @@ import {
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 
-import { API_BASE_URL, isApiConfigured } from "@/api/config";
-import { useAuth } from "@/auth/AuthProvider";
-import { ROTULO_PAPEL, type Capacidade } from "@/auth/permissions";
-import { SessaoSwitcher } from "@/components/sessao-switcher";
+import { useSessao } from "@/hooks/use-sessao";
+import { supabase } from "@/integrations/supabase/client";
+import { ROTULO_PAPEL, type Capacidade } from "@/lib/dominio";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface ItemNav {
   to: string;
@@ -28,7 +29,7 @@ interface ItemNav {
 }
 
 const NAV: ItemNav[] = [
-  { to: "/", label: "Visão geral", icone: Building2, mobile: true },
+  { to: "/painel", label: "Painel", icone: Building2, mobile: true },
   {
     to: "/eventos",
     label: "Eventos",
@@ -60,7 +61,7 @@ const NAV: ItemNav[] = [
   {
     to: "/clientes",
     label: "Clientes",
-    icone: Banknote,
+    icone: Contact,
     capacidade: "cadastros.gerenciar",
   },
   {
@@ -81,15 +82,7 @@ const NAV: ItemNav[] = [
     icone: Settings,
     capacidade: "configuracoes.gerenciar",
   },
-  { to: "/conexao", label: "Conexão com a API", icone: PlugZap },
 ];
-
-function useItensVisiveis() {
-  const { sessao, podeFazer } = useAuth();
-  return NAV.filter(
-    (item) => !item.capacidade || (sessao ? podeFazer(item.capacidade) : false),
-  );
-}
 
 export function AppShell({
   titulo,
@@ -102,24 +95,33 @@ export function AppShell({
   acoes?: ReactNode;
   children: ReactNode;
 }) {
-  const itens = useItensVisiveis();
+  const { sessao, pode } = useSessao();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { sessao, carregado } = useAuth();
-  const itensMobile = itens.filter((i) => i.mobile);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const itens = NAV.filter((i) => !i.capacidade || pode(i.capacidade));
+  const itensMobile = itens.filter((i) => i.mobile).slice(0, 5);
+
+  async function sair() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[15rem_1fr]">
-      <aside className="hidden bg-sidebar text-sidebar-foreground lg:flex lg:h-screen lg:flex-col lg:sticky lg:top-0">
+      <aside className="hidden bg-sidebar text-sidebar-foreground lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
         <div className="border-b border-sidebar-border px-4 py-4">
           <p className="text-sm font-semibold tracking-tight">PayCrew</p>
-          <p className="text-xs text-sidebar-foreground/60">
-            Operação e pagamento de equipes
+          <p className="truncate text-xs text-sidebar-foreground/60">
+            {sessao?.empresa?.nome ?? "Operação e pagamento de equipes"}
           </p>
         </div>
         <nav className="flex-1 overflow-y-auto p-2">
           {itens.map((item) => {
-            const ativo =
-              item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+            const ativo = pathname.startsWith(item.to);
             const Icone = item.icone;
             return (
               <Link
@@ -138,16 +140,21 @@ export function AppShell({
             );
           })}
         </nav>
-        <div className="border-t border-sidebar-border px-4 py-3 text-xs text-sidebar-foreground/60">
-          <p className="truncate">
-            API: {isApiConfigured() ? API_BASE_URL : "não configurada"}
+        <div className="space-y-2 border-t border-sidebar-border px-4 py-3 text-xs text-sidebar-foreground/70">
+          <p className="truncate font-medium text-sidebar-foreground">
+            {sessao?.usuario.nome}
           </p>
-          {carregado && sessao ? (
-            <p className="mt-1 truncate">
-              {sessao.nomeExibicao ?? "Sessão local"} ·{" "}
-              {ROTULO_PAPEL[sessao.papel]}
-            </p>
-          ) : null}
+          <p className="truncate">
+            {sessao?.papeis.map((p) => ROTULO_PAPEL[p]).join(" · ") || "Sem papel"}
+          </p>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 w-full justify-start px-2 text-xs text-sidebar-foreground/80 hover:bg-sidebar-accent"
+            onClick={sair}
+          >
+            <LogOut className="size-3.5" /> Sair
+          </Button>
         </div>
       </aside>
 
@@ -159,14 +166,20 @@ export function AppShell({
                 {titulo}
               </h1>
               {descricao ? (
-                <p className="truncate text-sm text-muted-foreground">
-                  {descricao}
-                </p>
+                <p className="truncate text-sm text-muted-foreground">{descricao}</p>
               ) : null}
             </div>
             <div className="flex items-center gap-2">
               {acoes}
-              <SessaoSwitcher />
+              <Button
+                size="sm"
+                variant="ghost"
+                className="lg:hidden"
+                onClick={sair}
+                aria-label="Sair"
+              >
+                <LogOut className="size-4" />
+              </Button>
             </div>
           </div>
         </header>
@@ -174,10 +187,12 @@ export function AppShell({
         <main className="flex-1 px-4 py-4 lg:px-6 lg:py-6">{children}</main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-background lg:hidden">
-        {itensMobile.slice(0, 5).map((item) => {
-          const ativo =
-            item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+      <nav
+        className="fixed inset-x-0 bottom-0 z-20 grid border-t border-border bg-background lg:hidden"
+        style={{ gridTemplateColumns: `repeat(${itensMobile.length || 1}, minmax(0, 1fr))` }}
+      >
+        {itensMobile.map((item) => {
+          const ativo = pathname.startsWith(item.to);
           const Icone = item.icone;
           return (
             <Link
