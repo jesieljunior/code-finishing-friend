@@ -12,16 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as ClientesRouteImport } from './routes/clientes'
-import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
-import { Route as EventosRouteImport } from './routes/eventos'
-import { Route as FechamentoRouteImport } from './routes/fechamento'
-import { Route as FinanceiroRouteImport } from './routes/financeiro'
-import { Route as FreelancersRouteImport } from './routes/freelancers'
-import { Route as OperacaoRouteImport } from './routes/operacao'
-import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedFreelancersRouteImport } from './routes/_authenticated/freelancers'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authenticated/eventos.index'
+import { Route as AuthenticatedEventosEventoIdRouteImport } from './routes/_authenticated/eventos.$eventoId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -37,46 +34,23 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClientesRoute = ClientesRouteImport.update({
+const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
-  id: '/configuracoes',
-  path: '/configuracoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EventosRoute = EventosRouteImport.update({
-  id: '/eventos',
-  path: '/eventos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FechamentoRoute = FechamentoRouteImport.update({
-  id: '/fechamento',
-  path: '/fechamento',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FinanceiroRoute = FinanceiroRouteImport.update({
-  id: '/financeiro',
-  path: '/financeiro',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FreelancersRoute = FreelancersRouteImport.update({
-  id: '/freelancers',
-  path: '/freelancers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OperacaoRoute = OperacaoRouteImport.update({
-  id: '/operacao',
-  path: '/operacao',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RelatoriosRoute = RelatoriosRouteImport.update({
-  id: '/relatorios',
-  path: '/relatorios',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedConfiguracoesRoute =
+  AuthenticatedConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFreelancersRoute =
+  AuthenticatedFreelancersRouteImport.update({
+    id: '/freelancers',
+    path: '/freelancers',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -87,50 +61,53 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEventosIndexRoute =
+  AuthenticatedEventosIndexRouteImport.update({
+    id: '/eventos/',
+    path: '/eventos/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEventosEventoIdRoute =
+  AuthenticatedEventosEventoIdRouteImport.update({
+    id: '/eventos/$eventoId',
+    path: '/eventos/$eventoId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/clientes': typeof ClientesRoute
-  '/configuracoes': typeof ConfiguracoesRoute
-  '/eventos': typeof EventosRoute
-  '/fechamento': typeof FechamentoRoute
-  '/financeiro': typeof FinanceiroRoute
-  '/freelancers': typeof FreelancersRoute
-  '/operacao': typeof OperacaoRoute
-  '/relatorios': typeof RelatoriosRoute
+  '/clientes': typeof AuthenticatedClientesRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/freelancers': typeof AuthenticatedFreelancersRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
+  '/eventos/': typeof AuthenticatedEventosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/clientes': typeof ClientesRoute
-  '/configuracoes': typeof ConfiguracoesRoute
-  '/eventos': typeof EventosRoute
-  '/fechamento': typeof FechamentoRoute
-  '/financeiro': typeof FinanceiroRoute
-  '/freelancers': typeof FreelancersRoute
-  '/operacao': typeof OperacaoRoute
-  '/relatorios': typeof RelatoriosRoute
+  '/clientes': typeof AuthenticatedClientesRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/freelancers': typeof AuthenticatedFreelancersRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
+  '/eventos': typeof AuthenticatedEventosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/clientes': typeof ClientesRoute
-  '/configuracoes': typeof ConfiguracoesRoute
-  '/eventos': typeof EventosRoute
-  '/fechamento': typeof FechamentoRoute
-  '/financeiro': typeof FinanceiroRoute
-  '/freelancers': typeof FreelancersRoute
-  '/operacao': typeof OperacaoRoute
-  '/relatorios': typeof RelatoriosRoute
+  '/_authenticated/clientes': typeof AuthenticatedClientesRoute
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/freelancers': typeof AuthenticatedFreelancersRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
+  '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,57 +116,40 @@ export interface FileRouteTypes {
     | '/auth'
     | '/clientes'
     | '/configuracoes'
-    | '/eventos'
-    | '/fechamento'
-    | '/financeiro'
     | '/freelancers'
-    | '/operacao'
-    | '/relatorios'
     | '/onboarding'
     | '/painel'
+    | '/eventos/$eventoId'
+    | '/eventos/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/clientes'
     | '/configuracoes'
-    | '/eventos'
-    | '/fechamento'
-    | '/financeiro'
     | '/freelancers'
-    | '/operacao'
-    | '/relatorios'
     | '/onboarding'
     | '/painel'
+    | '/eventos/$eventoId'
+    | '/eventos'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
-    | '/clientes'
-    | '/configuracoes'
-    | '/eventos'
-    | '/fechamento'
-    | '/financeiro'
-    | '/freelancers'
-    | '/operacao'
-    | '/relatorios'
+    | '/_authenticated/clientes'
+    | '/_authenticated/configuracoes'
+    | '/_authenticated/freelancers'
     | '/_authenticated/onboarding'
     | '/_authenticated/painel'
+    | '/_authenticated/eventos/$eventoId'
+    | '/_authenticated/eventos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ClientesRoute: typeof ClientesRoute
-  ConfiguracoesRoute: typeof ConfiguracoesRoute
-  EventosRoute: typeof EventosRoute
-  FechamentoRoute: typeof FechamentoRoute
-  FinanceiroRoute: typeof FinanceiroRoute
-  FreelancersRoute: typeof FreelancersRoute
-  OperacaoRoute: typeof OperacaoRoute
-  RelatoriosRoute: typeof RelatoriosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -215,61 +175,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/clientes': {
-      id: '/clientes'
+    '/_authenticated/clientes': {
+      id: '/_authenticated/clientes'
       path: '/clientes'
       fullPath: '/clientes'
-      preLoaderRoute: typeof ClientesRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedClientesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/configuracoes': {
-      id: '/configuracoes'
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
       path: '/configuracoes'
       fullPath: '/configuracoes'
-      preLoaderRoute: typeof ConfiguracoesRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/eventos': {
-      id: '/eventos'
-      path: '/eventos'
-      fullPath: '/eventos'
-      preLoaderRoute: typeof EventosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fechamento': {
-      id: '/fechamento'
-      path: '/fechamento'
-      fullPath: '/fechamento'
-      preLoaderRoute: typeof FechamentoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/financeiro': {
-      id: '/financeiro'
-      path: '/financeiro'
-      fullPath: '/financeiro'
-      preLoaderRoute: typeof FinanceiroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/freelancers': {
-      id: '/freelancers'
+    '/_authenticated/freelancers': {
+      id: '/_authenticated/freelancers'
       path: '/freelancers'
       fullPath: '/freelancers'
-      preLoaderRoute: typeof FreelancersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/operacao': {
-      id: '/operacao'
-      path: '/operacao'
-      fullPath: '/operacao'
-      preLoaderRoute: typeof OperacaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/relatorios': {
-      id: '/relatorios'
-      path: '/relatorios'
-      fullPath: '/relatorios'
-      preLoaderRoute: typeof RelatoriosRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedFreelancersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
@@ -285,17 +210,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/eventos/': {
+      id: '/_authenticated/eventos/'
+      path: '/eventos'
+      fullPath: '/eventos/'
+      preLoaderRoute: typeof AuthenticatedEventosIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/eventos/$eventoId': {
+      id: '/_authenticated/eventos/$eventoId'
+      path: '/eventos/$eventoId'
+      fullPath: '/eventos/$eventoId'
+      preLoaderRoute: typeof AuthenticatedEventosEventoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
+  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedFreelancersRoute: typeof AuthenticatedFreelancersRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedEventosEventoIdRoute: typeof AuthenticatedEventosEventoIdRoute
+  AuthenticatedEventosIndexRoute: typeof AuthenticatedEventosIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedClientesRoute: AuthenticatedClientesRoute,
+  AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedFreelancersRoute: AuthenticatedFreelancersRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedEventosEventoIdRoute: AuthenticatedEventosEventoIdRoute,
+  AuthenticatedEventosIndexRoute: AuthenticatedEventosIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -305,14 +254,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  ClientesRoute: ClientesRoute,
-  ConfiguracoesRoute: ConfiguracoesRoute,
-  EventosRoute: EventosRoute,
-  FechamentoRoute: FechamentoRoute,
-  FinanceiroRoute: FinanceiroRoute,
-  FreelancersRoute: FreelancersRoute,
-  OperacaoRoute: OperacaoRoute,
-  RelatoriosRoute: RelatoriosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
