@@ -21,6 +21,7 @@ import { Route as PontoTokenRouteImport } from './routes/ponto.$token'
 import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authenticated/eventos.index'
 import { Route as AuthenticatedEventosEventoIdRouteImport } from './routes/_authenticated/eventos.$eventoId'
 import { Route as AuthenticatedOperacaoIndexRouteImport } from './routes/_authenticated/operacao.index'
+import { Route as AuthenticatedOperacaoEventoIdRouteImport } from './routes/_authenticated/operacao.$eventoId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -86,6 +87,12 @@ const AuthenticatedOperacaoIndexRoute =
     path: '/operacao/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOperacaoEventoIdRoute =
+  AuthenticatedOperacaoEventoIdRouteImport.update({
+    id: '/operacao/$eventoId',
+    path: '/operacao/$eventoId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/painel': typeof AuthenticatedPainelRoute
   '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
+  '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/eventos/': typeof AuthenticatedEventosIndexRoute
   '/operacao/': typeof AuthenticatedOperacaoIndexRoute
 }
@@ -110,6 +118,7 @@ export interface FileRoutesByTo {
   '/painel': typeof AuthenticatedPainelRoute
   '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
+  '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/eventos': typeof AuthenticatedEventosIndexRoute
   '/operacao': typeof AuthenticatedOperacaoIndexRoute
 }
@@ -125,6 +134,7 @@ export interface FileRoutesById {
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/ponto/$token': typeof PontoTokenRoute
   '/_authenticated/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
+  '/_authenticated/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
   '/_authenticated/operacao/': typeof AuthenticatedOperacaoIndexRoute
 }
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/ponto/$token'
     | '/eventos/$eventoId'
+    | '/operacao/$eventoId'
     | '/eventos/'
     | '/operacao/'
   fileRoutesByTo: FileRoutesByTo
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/ponto/$token'
     | '/eventos/$eventoId'
+    | '/operacao/$eventoId'
     | '/eventos'
     | '/operacao'
   id:
@@ -167,6 +179,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/ponto/$token'
     | '/_authenticated/eventos/$eventoId'
+    | '/_authenticated/operacao/$eventoId'
     | '/_authenticated/eventos/'
     | '/_authenticated/operacao/'
   fileRoutesById: FileRoutesById
@@ -264,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOperacaoIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/operacao/$eventoId': {
+      id: '/_authenticated/operacao/$eventoId'
+      path: '/operacao/$eventoId'
+      fullPath: '/operacao/$eventoId'
+      preLoaderRoute: typeof AuthenticatedOperacaoEventoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -274,6 +294,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedEventosEventoIdRoute: typeof AuthenticatedEventosEventoIdRoute
+  AuthenticatedOperacaoEventoIdRoute: typeof AuthenticatedOperacaoEventoIdRoute
   AuthenticatedEventosIndexRoute: typeof AuthenticatedEventosIndexRoute
   AuthenticatedOperacaoIndexRoute: typeof AuthenticatedOperacaoIndexRoute
 }
@@ -285,6 +306,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedEventosEventoIdRoute: AuthenticatedEventosEventoIdRoute,
+  AuthenticatedOperacaoEventoIdRoute: AuthenticatedOperacaoEventoIdRoute,
   AuthenticatedEventosIndexRoute: AuthenticatedEventosIndexRoute,
   AuthenticatedOperacaoIndexRoute: AuthenticatedOperacaoIndexRoute,
 }
