@@ -263,7 +263,7 @@ async function tirarSelfie(): Promise<string> {
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
-    canvas.getContext("2d")!.drawImage(canvas.width ? video : video, 0, 0, canvas.width, canvas.height);
+    canvas.getContext("2d")!.drawImage(video, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL("image/jpeg", 0.7);
   } finally {
     stream.getTracks().forEach((t) => t.stop());
