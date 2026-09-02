@@ -17,6 +17,7 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedFreelancersRouteImport } from './routes/_authenticated/freelancers'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as PontoTokenRouteImport } from './routes/ponto.$token'
 import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authenticated/eventos.index'
 import { Route as AuthenticatedEventosEventoIdRouteImport } from './routes/_authenticated/eventos.$eventoId'
 
@@ -61,6 +62,11 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const PontoTokenRoute = PontoTokenRouteImport.update({
+  id: '/ponto/$token',
+  path: '/ponto/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedEventosIndexRoute =
   AuthenticatedEventosIndexRouteImport.update({
     id: '/eventos/',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/freelancers': typeof AuthenticatedFreelancersRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/eventos/': typeof AuthenticatedEventosIndexRoute
 }
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/freelancers': typeof AuthenticatedFreelancersRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/eventos': typeof AuthenticatedEventosIndexRoute
 }
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/_authenticated/freelancers': typeof AuthenticatedFreelancersRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/ponto/$token': typeof PontoTokenRoute
   '/_authenticated/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/freelancers'
     | '/onboarding'
     | '/painel'
+    | '/ponto/$token'
     | '/eventos/$eventoId'
     | '/eventos/'
   fileRoutesByTo: FileRoutesByTo
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/freelancers'
     | '/onboarding'
     | '/painel'
+    | '/ponto/$token'
     | '/eventos/$eventoId'
     | '/eventos'
   id:
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/_authenticated/freelancers'
     | '/_authenticated/onboarding'
     | '/_authenticated/painel'
+    | '/ponto/$token'
     | '/_authenticated/eventos/$eventoId'
     | '/_authenticated/eventos/'
   fileRoutesById: FileRoutesById
@@ -150,6 +162,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  PontoTokenRoute: typeof PontoTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -210,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/ponto/$token': {
+      id: '/ponto/$token'
+      path: '/ponto/$token'
+      fullPath: '/ponto/$token'
+      preLoaderRoute: typeof PontoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/eventos/': {
       id: '/_authenticated/eventos/'
       path: '/eventos'
@@ -254,6 +274,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  PontoTokenRoute: PontoTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
