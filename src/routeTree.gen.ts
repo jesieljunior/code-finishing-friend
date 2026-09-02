@@ -14,11 +14,15 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedFechamentoRouteImport } from './routes/_authenticated/fechamento'
 import { Route as AuthenticatedFreelancersRouteImport } from './routes/_authenticated/freelancers'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as PontoTokenRouteImport } from './routes/ponto.$token'
 import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authenticated/eventos.index'
 import { Route as AuthenticatedEventosEventoIdRouteImport } from './routes/_authenticated/eventos.$eventoId'
+import { Route as AuthenticatedOperacaoIndexRouteImport } from './routes/_authenticated/operacao.index'
+import { Route as AuthenticatedOperacaoEventoIdRouteImport } from './routes/_authenticated/operacao.$eventoId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +49,11 @@ const AuthenticatedConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFechamentoRoute = AuthenticatedFechamentoRouteImport.update({
+  id: '/fechamento',
+  path: '/fechamento',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedFreelancersRoute =
   AuthenticatedFreelancersRouteImport.update({
     id: '/freelancers',
@@ -61,6 +70,11 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const PontoTokenRoute = PontoTokenRouteImport.update({
+  id: '/ponto/$token',
+  path: '/ponto/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedEventosIndexRoute =
   AuthenticatedEventosIndexRouteImport.update({
     id: '/eventos/',
@@ -73,28 +87,48 @@ const AuthenticatedEventosEventoIdRoute =
     path: '/eventos/$eventoId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOperacaoIndexRoute =
+  AuthenticatedOperacaoIndexRouteImport.update({
+    id: '/operacao/',
+    path: '/operacao/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOperacaoEventoIdRoute =
+  AuthenticatedOperacaoEventoIdRouteImport.update({
+    id: '/operacao/$eventoId',
+    path: '/operacao/$eventoId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/fechamento': typeof AuthenticatedFechamentoRoute
   '/freelancers': typeof AuthenticatedFreelancersRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
+  '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/eventos/': typeof AuthenticatedEventosIndexRoute
+  '/operacao/': typeof AuthenticatedOperacaoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/fechamento': typeof AuthenticatedFechamentoRoute
   '/freelancers': typeof AuthenticatedFreelancersRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
+  '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/eventos': typeof AuthenticatedEventosIndexRoute
+  '/operacao': typeof AuthenticatedOperacaoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,11 +137,15 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/fechamento': typeof AuthenticatedFechamentoRoute
   '/_authenticated/freelancers': typeof AuthenticatedFreelancersRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/ponto/$token': typeof PontoTokenRoute
   '/_authenticated/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
+  '/_authenticated/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
+  '/_authenticated/operacao/': typeof AuthenticatedOperacaoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -116,22 +154,30 @@ export interface FileRouteTypes {
     | '/auth'
     | '/clientes'
     | '/configuracoes'
+    | '/fechamento'
     | '/freelancers'
     | '/onboarding'
     | '/painel'
+    | '/ponto/$token'
     | '/eventos/$eventoId'
+    | '/operacao/$eventoId'
     | '/eventos/'
+    | '/operacao/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/clientes'
     | '/configuracoes'
+    | '/fechamento'
     | '/freelancers'
     | '/onboarding'
     | '/painel'
+    | '/ponto/$token'
     | '/eventos/$eventoId'
+    | '/operacao/$eventoId'
     | '/eventos'
+    | '/operacao'
   id:
     | '__root__'
     | '/'
@@ -139,17 +185,22 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/clientes'
     | '/_authenticated/configuracoes'
+    | '/_authenticated/fechamento'
     | '/_authenticated/freelancers'
     | '/_authenticated/onboarding'
     | '/_authenticated/painel'
+    | '/ponto/$token'
     | '/_authenticated/eventos/$eventoId'
+    | '/_authenticated/operacao/$eventoId'
     | '/_authenticated/eventos/'
+    | '/_authenticated/operacao/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  PontoTokenRoute: typeof PontoTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -189,6 +240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fechamento': {
+      id: '/_authenticated/fechamento'
+      path: '/fechamento'
+      fullPath: '/fechamento'
+      preLoaderRoute: typeof AuthenticatedFechamentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/freelancers': {
       id: '/_authenticated/freelancers'
       path: '/freelancers'
@@ -210,6 +268,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/ponto/$token': {
+      id: '/ponto/$token'
+      path: '/ponto/$token'
+      fullPath: '/ponto/$token'
+      preLoaderRoute: typeof PontoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/eventos/': {
       id: '/_authenticated/eventos/'
       path: '/eventos'
@@ -224,27 +289,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEventosEventoIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/operacao/': {
+      id: '/_authenticated/operacao/'
+      path: '/operacao'
+      fullPath: '/operacao/'
+      preLoaderRoute: typeof AuthenticatedOperacaoIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/operacao/$eventoId': {
+      id: '/_authenticated/operacao/$eventoId'
+      path: '/operacao/$eventoId'
+      fullPath: '/operacao/$eventoId'
+      preLoaderRoute: typeof AuthenticatedOperacaoEventoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedFechamentoRoute: typeof AuthenticatedFechamentoRoute
   AuthenticatedFreelancersRoute: typeof AuthenticatedFreelancersRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedEventosEventoIdRoute: typeof AuthenticatedEventosEventoIdRoute
+  AuthenticatedOperacaoEventoIdRoute: typeof AuthenticatedOperacaoEventoIdRoute
   AuthenticatedEventosIndexRoute: typeof AuthenticatedEventosIndexRoute
+  AuthenticatedOperacaoIndexRoute: typeof AuthenticatedOperacaoIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedFechamentoRoute: AuthenticatedFechamentoRoute,
   AuthenticatedFreelancersRoute: AuthenticatedFreelancersRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedEventosEventoIdRoute: AuthenticatedEventosEventoIdRoute,
+  AuthenticatedOperacaoEventoIdRoute: AuthenticatedOperacaoEventoIdRoute,
   AuthenticatedEventosIndexRoute: AuthenticatedEventosIndexRoute,
+  AuthenticatedOperacaoIndexRoute: AuthenticatedOperacaoIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -254,6 +339,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  PontoTokenRoute: PontoTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
