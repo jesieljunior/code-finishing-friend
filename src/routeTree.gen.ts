@@ -20,6 +20,7 @@ import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated
 import { Route as PontoTokenRouteImport } from './routes/ponto.$token'
 import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authenticated/eventos.index'
 import { Route as AuthenticatedEventosEventoIdRouteImport } from './routes/_authenticated/eventos.$eventoId'
+import { Route as AuthenticatedOperacaoIndexRouteImport } from './routes/_authenticated/operacao.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -79,6 +80,12 @@ const AuthenticatedEventosEventoIdRoute =
     path: '/eventos/$eventoId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOperacaoIndexRoute =
+  AuthenticatedOperacaoIndexRouteImport.update({
+    id: '/operacao/',
+    path: '/operacao/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/eventos/': typeof AuthenticatedEventosIndexRoute
+  '/operacao/': typeof AuthenticatedOperacaoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -103,6 +111,7 @@ export interface FileRoutesByTo {
   '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/eventos': typeof AuthenticatedEventosIndexRoute
+  '/operacao': typeof AuthenticatedOperacaoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -117,6 +126,7 @@ export interface FileRoutesById {
   '/ponto/$token': typeof PontoTokenRoute
   '/_authenticated/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
+  '/_authenticated/operacao/': typeof AuthenticatedOperacaoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/ponto/$token'
     | '/eventos/$eventoId'
     | '/eventos/'
+    | '/operacao/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/ponto/$token'
     | '/eventos/$eventoId'
     | '/eventos'
+    | '/operacao'
   id:
     | '__root__'
     | '/'
@@ -156,6 +168,7 @@ export interface FileRouteTypes {
     | '/ponto/$token'
     | '/_authenticated/eventos/$eventoId'
     | '/_authenticated/eventos/'
+    | '/_authenticated/operacao/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -244,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEventosEventoIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/operacao/': {
+      id: '/_authenticated/operacao/'
+      path: '/operacao'
+      fullPath: '/operacao/'
+      preLoaderRoute: typeof AuthenticatedOperacaoIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -255,6 +275,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedEventosEventoIdRoute: typeof AuthenticatedEventosEventoIdRoute
   AuthenticatedEventosIndexRoute: typeof AuthenticatedEventosIndexRoute
+  AuthenticatedOperacaoIndexRoute: typeof AuthenticatedOperacaoIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -265,6 +286,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedEventosEventoIdRoute: AuthenticatedEventosEventoIdRoute,
   AuthenticatedEventosIndexRoute: AuthenticatedEventosIndexRoute,
+  AuthenticatedOperacaoIndexRoute: AuthenticatedOperacaoIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
