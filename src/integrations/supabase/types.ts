@@ -49,6 +49,88 @@ export type Database = {
           },
         ]
       }
+      cobrancas: {
+        Row: {
+          atualizado_em: string
+          cliente_id: string | null
+          criado_em: string
+          descricao: string
+          empresa_id: string
+          erro: string | null
+          evento_id: string | null
+          forma: Database["public"]["Enums"]["forma_cobranca"]
+          id: string
+          link_pagamento: string | null
+          pago_em: string | null
+          parceiro_cobranca_id: string | null
+          pix_copia_cola: string | null
+          status: Database["public"]["Enums"]["status_cobranca"]
+          tipo: Database["public"]["Enums"]["tipo_cobranca"]
+          valor: number
+          vencimento: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          cliente_id?: string | null
+          criado_em?: string
+          descricao?: string
+          empresa_id: string
+          erro?: string | null
+          evento_id?: string | null
+          forma?: Database["public"]["Enums"]["forma_cobranca"]
+          id?: string
+          link_pagamento?: string | null
+          pago_em?: string | null
+          parceiro_cobranca_id?: string | null
+          pix_copia_cola?: string | null
+          status?: Database["public"]["Enums"]["status_cobranca"]
+          tipo: Database["public"]["Enums"]["tipo_cobranca"]
+          valor: number
+          vencimento?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          cliente_id?: string | null
+          criado_em?: string
+          descricao?: string
+          empresa_id?: string
+          erro?: string | null
+          evento_id?: string | null
+          forma?: Database["public"]["Enums"]["forma_cobranca"]
+          id?: string
+          link_pagamento?: string | null
+          pago_em?: string | null
+          parceiro_cobranca_id?: string | null
+          pix_copia_cola?: string | null
+          status?: Database["public"]["Enums"]["status_cobranca"]
+          tipo?: Database["public"]["Enums"]["tipo_cobranca"]
+          valor?: number
+          vencimento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cobrancas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracoes: {
         Row: {
           atualizado_em: string
@@ -58,8 +140,12 @@ export type Database = {
           empresa_id: string
           escala_exige_confirmacao_presenca: boolean
           id: string
+          mensalidade: number
+          modelo_cobranca: Database["public"]["Enums"]["modelo_cobranca"]
           ocorrencias_habilitadas: boolean
+          percentual_plataforma: number
           substituicao_habilitada: boolean
+          taxa_fixa_pix: number
         }
         Insert: {
           atualizado_em?: string
@@ -69,8 +155,12 @@ export type Database = {
           empresa_id: string
           escala_exige_confirmacao_presenca?: boolean
           id?: string
+          mensalidade?: number
+          modelo_cobranca?: Database["public"]["Enums"]["modelo_cobranca"]
           ocorrencias_habilitadas?: boolean
+          percentual_plataforma?: number
           substituicao_habilitada?: boolean
+          taxa_fixa_pix?: number
         }
         Update: {
           atualizado_em?: string
@@ -80,8 +170,12 @@ export type Database = {
           empresa_id?: string
           escala_exige_confirmacao_presenca?: boolean
           id?: string
+          mensalidade?: number
+          modelo_cobranca?: Database["public"]["Enums"]["modelo_cobranca"]
           ocorrencias_habilitadas?: boolean
+          percentual_plataforma?: number
           substituicao_habilitada?: boolean
+          taxa_fixa_pix?: number
         }
         Relationships: [
           {
@@ -101,6 +195,9 @@ export type Database = {
           criado_em: string
           id: string
           nome: string
+          parceiro_aprovada_em: string | null
+          parceiro_conta_status: string
+          parceiro_wallet_id: string | null
           subconta_parceiro_id: string | null
         }
         Insert: {
@@ -110,6 +207,9 @@ export type Database = {
           criado_em?: string
           id?: string
           nome: string
+          parceiro_aprovada_em?: string | null
+          parceiro_conta_status?: string
+          parceiro_wallet_id?: string | null
           subconta_parceiro_id?: string | null
         }
         Update: {
@@ -119,6 +219,9 @@ export type Database = {
           criado_em?: string
           id?: string
           nome?: string
+          parceiro_aprovada_em?: string | null
+          parceiro_conta_status?: string
+          parceiro_wallet_id?: string | null
           subconta_parceiro_id?: string | null
         }
         Relationships: []
@@ -384,6 +487,74 @@ export type Database = {
           },
         ]
       }
+      movimentos_saldo: {
+        Row: {
+          atualizado_em: string
+          cobranca_id: string | null
+          criado_em: string
+          descricao: string
+          empresa_id: string
+          id: string
+          pagamento_id: string | null
+          taxa_id: string | null
+          tipo: Database["public"]["Enums"]["tipo_movimento"]
+          valor: number
+        }
+        Insert: {
+          atualizado_em?: string
+          cobranca_id?: string | null
+          criado_em?: string
+          descricao?: string
+          empresa_id: string
+          id?: string
+          pagamento_id?: string | null
+          taxa_id?: string | null
+          tipo: Database["public"]["Enums"]["tipo_movimento"]
+          valor: number
+        }
+        Update: {
+          atualizado_em?: string
+          cobranca_id?: string | null
+          criado_em?: string
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          pagamento_id?: string | null
+          taxa_id?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_movimento"]
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentos_saldo_cobranca_id_fkey"
+            columns: ["cobranca_id"]
+            isOneToOne: false
+            referencedRelation: "cobrancas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentos_saldo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentos_saldo_pagamento_id_fkey"
+            columns: ["pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "pagamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentos_saldo_taxa_id_fkey"
+            columns: ["taxa_id"]
+            isOneToOne: false
+            referencedRelation: "taxas_plataforma"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocorrencias: {
         Row: {
           atualizado_em: string
@@ -430,6 +601,7 @@ export type Database = {
         Row: {
           atualizado_em: string
           chave_idempotencia: string
+          chave_pix_destino: string | null
           comprovante_url: string | null
           criado_em: string
           data_agendada: string | null
@@ -437,6 +609,7 @@ export type Database = {
           executado_em: string | null
           fechamento_id: string
           id: string
+          parceiro_transferencia_id: string | null
           status: Database["public"]["Enums"]["status_pagamento"]
           tentativas: number
           txid_parceiro: string | null
@@ -445,6 +618,7 @@ export type Database = {
         Insert: {
           atualizado_em?: string
           chave_idempotencia: string
+          chave_pix_destino?: string | null
           comprovante_url?: string | null
           criado_em?: string
           data_agendada?: string | null
@@ -452,6 +626,7 @@ export type Database = {
           executado_em?: string | null
           fechamento_id: string
           id?: string
+          parceiro_transferencia_id?: string | null
           status?: Database["public"]["Enums"]["status_pagamento"]
           tentativas?: number
           txid_parceiro?: string | null
@@ -460,6 +635,7 @@ export type Database = {
         Update: {
           atualizado_em?: string
           chave_idempotencia?: string
+          chave_pix_destino?: string | null
           comprovante_url?: string | null
           criado_em?: string
           data_agendada?: string | null
@@ -467,6 +643,7 @@ export type Database = {
           executado_em?: string | null
           fechamento_id?: string
           id?: string
+          parceiro_transferencia_id?: string | null
           status?: Database["public"]["Enums"]["status_pagamento"]
           tentativas?: number
           txid_parceiro?: string | null
@@ -544,6 +721,67 @@ export type Database = {
             columns: ["escala_id"]
             isOneToOne: false
             referencedRelation: "escalas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      taxas_plataforma: {
+        Row: {
+          atualizado_em: string
+          base_calculo: number
+          criado_em: string
+          empresa_id: string
+          evento_id: string | null
+          id: string
+          modelo: Database["public"]["Enums"]["modelo_cobranca"]
+          pagamento_id: string | null
+          status: Database["public"]["Enums"]["status_taxa"]
+          valor: number
+        }
+        Insert: {
+          atualizado_em?: string
+          base_calculo?: number
+          criado_em?: string
+          empresa_id: string
+          evento_id?: string | null
+          id?: string
+          modelo: Database["public"]["Enums"]["modelo_cobranca"]
+          pagamento_id?: string | null
+          status?: Database["public"]["Enums"]["status_taxa"]
+          valor: number
+        }
+        Update: {
+          atualizado_em?: string
+          base_calculo?: number
+          criado_em?: string
+          empresa_id?: string
+          evento_id?: string | null
+          id?: string
+          modelo?: Database["public"]["Enums"]["modelo_cobranca"]
+          pagamento_id?: string | null
+          status?: Database["public"]["Enums"]["status_taxa"]
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxas_plataforma_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taxas_plataforma_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taxas_plataforma_pagamento_id_fkey"
+            columns: ["pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "pagamentos"
             referencedColumns: ["id"]
           },
         ]
@@ -627,10 +865,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      saldo_empresa: { Args: { _empresa_id: string }; Returns: number }
     }
     Enums: {
+      forma_cobranca: "pix" | "boleto" | "cartao"
       metodo_check: "qrcode" | "selfie" | "manual"
+      modelo_cobranca:
+        | "percentual_evento"
+        | "taxa_fixa_pix"
+        | "assinatura_percentual"
       papel_usuario: "admin" | "coordenador" | "financeiro" | "supervisor"
+      status_cobranca:
+        | "rascunho"
+        | "aguardando_pagamento"
+        | "pago"
+        | "vencido"
+        | "cancelado"
       status_escala: "convidado" | "confirmado" | "recusado" | "substituido"
       status_evento:
         | "planejamento"
@@ -647,6 +897,9 @@ export type Database = {
       status_fechamento: "pendente_aprovacao" | "aprovado" | "contestado"
       status_pagamento: "pendente" | "agendado" | "executado" | "falhou"
       status_ponto: "pendente" | "aprovado" | "recusado"
+      status_taxa: "pendente" | "cobrada" | "isenta"
+      tipo_cobranca: "aporte_agencia" | "cobranca_cliente"
+      tipo_movimento: "credito" | "debito"
       tipo_ponto: "entrada" | "saida" | "inicio_intervalo" | "fim_intervalo"
       tipo_valor: "diaria" | "hora"
     }
@@ -776,8 +1029,21 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      forma_cobranca: ["pix", "boleto", "cartao"],
       metodo_check: ["qrcode", "selfie", "manual"],
+      modelo_cobranca: [
+        "percentual_evento",
+        "taxa_fixa_pix",
+        "assinatura_percentual",
+      ],
       papel_usuario: ["admin", "coordenador", "financeiro", "supervisor"],
+      status_cobranca: [
+        "rascunho",
+        "aguardando_pagamento",
+        "pago",
+        "vencido",
+        "cancelado",
+      ],
       status_escala: ["convidado", "confirmado", "recusado", "substituido"],
       status_evento: [
         "planejamento",
@@ -795,6 +1061,9 @@ export const Constants = {
       status_fechamento: ["pendente_aprovacao", "aprovado", "contestado"],
       status_pagamento: ["pendente", "agendado", "executado", "falhou"],
       status_ponto: ["pendente", "aprovado", "recusado"],
+      status_taxa: ["pendente", "cobrada", "isenta"],
+      tipo_cobranca: ["aporte_agencia", "cobranca_cliente"],
+      tipo_movimento: ["credito", "debito"],
       tipo_ponto: ["entrada", "saida", "inicio_intervalo", "fim_intervalo"],
       tipo_valor: ["diaria", "hora"],
     },
