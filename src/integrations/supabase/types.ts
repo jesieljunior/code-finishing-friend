@@ -17,27 +17,39 @@ export type Database = {
       clientes: {
         Row: {
           atualizado_em: string
+          cpf_cnpj: string | null
           criado_em: string
+          email: string | null
           empresa_id: string
           id: string
           nome: string
           observacoes: string | null
+          parceiro_cliente_id: string | null
+          telefone: string | null
         }
         Insert: {
           atualizado_em?: string
+          cpf_cnpj?: string | null
           criado_em?: string
+          email?: string | null
           empresa_id: string
           id?: string
           nome: string
           observacoes?: string | null
+          parceiro_cliente_id?: string | null
+          telefone?: string | null
         }
         Update: {
           atualizado_em?: string
+          cpf_cnpj?: string | null
           criado_em?: string
+          email?: string | null
           empresa_id?: string
           id?: string
           nome?: string
           observacoes?: string | null
+          parceiro_cliente_id?: string | null
+          telefone?: string | null
         }
         Relationships: [
           {
@@ -193,6 +205,7 @@ export type Database = {
           atualizado_em: string
           cnpj: string
           criado_em: string
+          email_cobranca: string | null
           id: string
           nome: string
           parceiro_aprovada_em: string | null
@@ -205,6 +218,7 @@ export type Database = {
           atualizado_em?: string
           cnpj: string
           criado_em?: string
+          email_cobranca?: string | null
           id?: string
           nome: string
           parceiro_aprovada_em?: string | null
@@ -217,6 +231,7 @@ export type Database = {
           atualizado_em?: string
           cnpj?: string
           criado_em?: string
+          email_cobranca?: string | null
           id?: string
           nome?: string
           parceiro_aprovada_em?: string | null
