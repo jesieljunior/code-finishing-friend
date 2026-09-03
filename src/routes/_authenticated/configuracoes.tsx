@@ -121,7 +121,7 @@ function Configuracoes() {
                 <p className="text-xs text-muted-foreground">{campo.descricao}</p>
               </div>
               <Switch
-                checked={q.data[campo.chave]}
+                checked={q.data?.[campo.chave] ?? false}
                 disabled={salvar.isPending}
                 onCheckedChange={(v) => salvar.mutate({ [campo.chave]: v })}
               />

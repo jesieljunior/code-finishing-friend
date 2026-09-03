@@ -262,7 +262,10 @@ function FormEscala({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (!freelancerId) return toast.error("Escolha o freelancer.");
+        if (!freelancerId) {
+          toast.error("Escolha o freelancer.");
+          return;
+        }
         salvar.mutate();
       }}
       className="space-y-3"

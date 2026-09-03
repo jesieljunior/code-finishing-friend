@@ -293,6 +293,13 @@ export const ROTULO_STATUS: Record<string, string> = {
 
 export const soDigitos = (v: string) => v.replace(/\D+/g, "");
 
+/** PostgREST pode tipar relação aninhada como objeto ou lista; normaliza. */
+export const lista = <T,>(v: T | T[] | null | undefined): T[] =>
+  Array.isArray(v) ? v : v ? [v] : [];
+
+export const um = <T,>(v: T | T[] | null | undefined): T | null =>
+  lista(v)[0] ?? null;
+
 export const formatarCpf = (v: string) => {
   const d = soDigitos(v).slice(0, 11);
   return d
