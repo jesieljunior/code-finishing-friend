@@ -156,7 +156,10 @@ function PaginaPonto() {
           className="space-y-3 rounded-md border border-border bg-card p-4"
           onSubmit={(e) => {
             e.preventDefault();
-            if (soDigitos(cpf).length !== 11) return toast.error("Informe os 11 dígitos do CPF.");
+            if (soDigitos(cpf).length !== 11) {
+              toast.error("Informe os 11 dígitos do CPF.");
+              return;
+            }
             identificar.mutate();
           }}
         >

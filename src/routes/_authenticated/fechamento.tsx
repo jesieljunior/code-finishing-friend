@@ -12,8 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   calcularFechamento,
   dataHora,
+  lista,
   moeda,
   ROTULO_TIPO_VALOR,
+  um,
   type Ponto,
 } from "@/lib/dominio";
 
@@ -68,7 +70,7 @@ function Fechamento() {
 
       const linhas = evento.equipes
         .flatMap((q) => q.escalas)
-        .filter((es) => es.status === "confirmado" && es.fechamentos.length === 0)
+        .filter((es) => es.status === "confirmado" && lista(es.fechamentos).length === 0)
         .map((es) => {
           const { horas, valor } = calcularFechamento(es, es.pontos as Ponto[]);
           return {
@@ -134,7 +136,7 @@ function Fechamento() {
               q.escalas.map((es) => ({ ...es, equipe: q.nome })),
             );
             const total = escalas
-              .flatMap((es) => es.fechamentos)
+              .flatMap((es) => lista(es.fechamentos))
               .reduce((s, f) => s + Number(f.valor_calculado), 0);
 
             return (
@@ -166,7 +168,7 @@ function Fechamento() {
                 ) : (
                   <ul className="divide-y divide-border">
                     {escalas.map((es) => {
-                      const f = es.fechamentos[0];
+                      const f = um(es.fechamentos);
                       const previa = calcularFechamento(es, es.pontos as Ponto[]);
                       return (
                         <li
