@@ -5,6 +5,6 @@
 - [x] Eventos: lista, criação, página do evento com ciclo, equipes e escalas
 - [x] Operação: painel do supervisor + página pública de ponto por QR Code
 - [x] Fechamento: gerar horas/valores, aprovar e contestar
-- [ ] Financeiro: fila de Pix simulado, agendar/executar/tentar de novo
-- [ ] Relatórios: resumo do evento + exportação CSV
-- [ ] Verificar build e rotas geradas
+- [x] Financeiro: fila de Pix simulado, agendar/executar/tentar de novo
+- [x] Relatórios: resumo do evento + exportação CSV
+- [x] Verificar build e rotas geradas
