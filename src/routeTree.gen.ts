@@ -25,6 +25,7 @@ import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedEventosEventoIdRouteImport } from './routes/_authenticated/eventos.$eventoId'
 import { Route as AuthenticatedOperacaoIndexRouteImport } from './routes/_authenticated/operacao.index'
 import { Route as AuthenticatedOperacaoEventoIdRouteImport } from './routes/_authenticated/operacao.$eventoId'
+import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -111,6 +112,11 @@ const AuthenticatedOperacaoEventoIdRoute =
     path: '/operacao/$eventoId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
+  id: '/api/public/webhooks/asaas',
+  path: '/api/public/webhooks/asaas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/eventos/': typeof AuthenticatedEventosIndexRoute
   '/operacao/': typeof AuthenticatedOperacaoIndexRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/eventos': typeof AuthenticatedEventosIndexRoute
   '/operacao': typeof AuthenticatedOperacaoIndexRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/_authenticated/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
   '/_authenticated/operacao/': typeof AuthenticatedOperacaoIndexRoute
+  '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/operacao/$eventoId'
     | '/eventos/'
     | '/operacao/'
+    | '/api/public/webhooks/asaas'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/operacao/$eventoId'
     | '/eventos'
     | '/operacao'
+    | '/api/public/webhooks/asaas'
   id:
     | '__root__'
     | '/'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/_authenticated/operacao/$eventoId'
     | '/_authenticated/eventos/'
     | '/_authenticated/operacao/'
+    | '/api/public/webhooks/asaas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   PontoTokenRoute: typeof PontoTokenRoute
+  ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -341,6 +354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOperacaoEventoIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/webhooks/asaas': {
+      id: '/api/public/webhooks/asaas'
+      path: '/api/public/webhooks/asaas'
+      fullPath: '/api/public/webhooks/asaas'
+      preLoaderRoute: typeof ApiPublicWebhooksAsaasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -382,6 +402,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   PontoTokenRoute: PontoTokenRoute,
+  ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
