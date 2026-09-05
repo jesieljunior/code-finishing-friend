@@ -1,13 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
 import { ErrorState, LoadingBloco } from "@/components/states";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/use-sessao";
-import type { Configuracao } from "@/lib/dominio";
+import {
+  DESCRICAO_MODELO_COBRANCA,
+  ROTULO_MODELO_COBRANCA,
+  moeda,
+  type Configuracao,
+  type ModeloCobranca,
+} from "@/lib/dominio";
+
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({
