@@ -279,6 +279,37 @@ export const TOM_POR_STATUS: Record<string, Tom> = {
   agendado: "ativo",
   executado: "pago",
   falhou: "erro",
+  rascunho: "neutro",
+  aguardando_pagamento: "pendente",
+  pago: "pago",
+  vencido: "erro",
+  cobrada: "pago",
+  isenta: "neutro",
+};
+
+/** Modelos de cobrança da plataforma sobre a agência. */
+export type ModeloCobranca = Enums["modelo_cobranca"];
+
+export const ROTULO_MODELO_COBRANCA: Record<ModeloCobranca, string> = {
+  percentual_evento: "Percentual sobre o evento",
+  taxa_fixa_pix: "Taxa fixa por Pix",
+  assinatura_percentual: "Mensalidade + percentual",
+};
+
+export const DESCRICAO_MODELO_COBRANCA: Record<ModeloCobranca, string> = {
+  percentual_evento:
+    "Cobramos uma única vez por evento, sobre o total dos fechamentos aprovados. Recomendado.",
+  taxa_fixa_pix: "Um valor fixo é cobrado a cada Pix enviado a um freelancer.",
+  assinatura_percentual:
+    "Mensalidade fixa da agência somada a um percentual menor por evento.",
+};
+
+export const ROTULO_STATUS_COBRANCA: Record<string, string> = {
+  rascunho: "Rascunho",
+  aguardando_pagamento: "Aguardando pagamento",
+  pago: "Pago",
+  vencido: "Vencido",
+  cancelado: "Cancelado",
 };
 
 export const ROTULO_STATUS: Record<string, string> = {
@@ -286,10 +317,12 @@ export const ROTULO_STATUS: Record<string, string> = {
   ...ROTULO_STATUS_ESCALA,
   ...ROTULO_STATUS_FECHAMENTO,
   ...ROTULO_STATUS_PAGAMENTO,
+  ...ROTULO_STATUS_COBRANCA,
   pendente: "Pendente",
   aprovado: "Aprovado",
   recusado: "Recusado",
 };
+
 
 export const soDigitos = (v: string) => v.replace(/\D+/g, "");
 

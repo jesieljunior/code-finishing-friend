@@ -1,13 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
 import { ErrorState, LoadingBloco } from "@/components/states";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/use-sessao";
-import type { Configuracao } from "@/lib/dominio";
+import {
+  DESCRICAO_MODELO_COBRANCA,
+  ROTULO_MODELO_COBRANCA,
+  moeda,
+  type Configuracao,
+  type ModeloCobranca,
+} from "@/lib/dominio";
+
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({
@@ -129,6 +140,110 @@ function Configuracoes() {
           ))}
         </ul>
       ) : null}
+
+      {q.data ? (
+        <PlanoCobranca
+          config={q.data}
+          salvando={salvar.isPending}
+          onSalvar={(patch) => salvar.mutate(patch)}
+        />
+      ) : null}
     </AppShell>
   );
 }
+
+const MODELOS: ModeloCobranca[] = [
+  "percentual_evento",
+  "taxa_fixa_pix",
+  "assinatura_percentual",
+];
+
+function PlanoCobranca({
+  config,
+  salvando,
+  onSalvar,
+}: {
+  config: Configuracao;
+  salvando: boolean;
+  onSalvar: (patch: Partial<Configuracao>) => void;
+}) {
+  const [percentual, setPercentual] = useState(String(config.percentual_plataforma));
+  const [taxaPix, setTaxaPix] = useState(String(config.taxa_fixa_pix));
+  const [mensalidade, setMensalidade] = useState(String(config.mensalidade));
+
+  const numero = (v: string) => Number(v.replace(",", "."));
+  const modelo = config.modelo_cobranca;
+
+  return (
+    <section className="mt-6 max-w-2xl rounded-md border border-border bg-card p-4">
+      <h2 className="text-sm font-semibold">Plano da plataforma</h2>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Como o PayCrew cobra pela operação financeira da sua agência.
+      </p>
+
+      <ul className="space-y-2">
+        {MODELOS.map((m) => (
+          <li key={m}>
+            <button
+              type="button"
+              disabled={salvando}
+              onClick={() => onSalvar({ modelo_cobranca: m })}
+              className={`w-full rounded-md border px-3 py-2 text-left transition-colors ${
+                modelo === m
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:bg-accent"
+              }`}
+            >
+              <p className="text-sm font-medium">{ROTULO_MODELO_COBRANCA[m]}</p>
+              <p className="text-xs text-muted-foreground">
+                {DESCRICAO_MODELO_COBRANCA[m]}
+              </p>
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="perc">Percentual por evento (%)</Label>
+          <Input
+            id="perc"
+            inputMode="decimal"
+            value={percentual}
+            onChange={(e) => setPercentual(e.target.value)}
+            onBlur={() => onSalvar({ percentual_plataforma: numero(percentual) })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="tpix">Taxa fixa por Pix (R$)</Label>
+          <Input
+            id="tpix"
+            inputMode="decimal"
+            value={taxaPix}
+            onChange={(e) => setTaxaPix(e.target.value)}
+            onBlur={() => onSalvar({ taxa_fixa_pix: numero(taxaPix) })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="mens">Mensalidade (R$)</Label>
+          <Input
+            id="mens"
+            inputMode="decimal"
+            value={mensalidade}
+            onChange={(e) => setMensalidade(e.target.value)}
+            onBlur={() => onSalvar({ mensalidade: numero(mensalidade) })}
+          />
+        </div>
+      </div>
+
+      <p className="mt-3 text-xs text-muted-foreground">
+        {modelo === "percentual_evento"
+          ? `Hoje: ${percentual}% do total do evento, cobrado uma vez por evento.`
+          : modelo === "taxa_fixa_pix"
+            ? `Hoje: ${moeda(numero(taxaPix))} a cada Pix enviado.`
+            : `Hoje: ${moeda(numero(mensalidade))} por mês + ${percentual}% por evento.`}
+      </p>
+    </section>
+  );
+}
+

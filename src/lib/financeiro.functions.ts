@@ -181,11 +181,11 @@ export const sincronizarCobranca = createServerFn({ method: "POST" })
  * - taxa_fixa_pix: uma taxa por Pix enviado.
  */
 async function garantirTaxa(
-  supabase: Awaited<ReturnType<typeof requireSupabaseAuth>> extends never
-    ? never
-    : { from: (t: string) => any },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
   args: { empresaId: string; eventoId: string | null; pagamentoId: string; valorPix: number },
 ) {
+
   const { data: config } = await supabase
     .from("configuracoes")
     .select("modelo_cobranca, percentual_plataforma, taxa_fixa_pix")
@@ -320,7 +320,7 @@ export const executarPagamentoPix = createServerFn({ method: "POST" })
         pagamento_id: pagamento.id,
       });
 
-      const taxa = await garantirTaxa(supabase as never, {
+      const taxa = await garantirTaxa(supabase, {
         empresaId,
         eventoId: equipe?.evento_id ?? null,
         pagamentoId: pagamento.id,
