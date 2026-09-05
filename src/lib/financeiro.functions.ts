@@ -320,7 +320,7 @@ export const executarPagamentoPix = createServerFn({ method: "POST" })
         pagamento_id: pagamento.id,
       });
 
-      const taxa = await garantirTaxa(supabase as never, {
+      const taxa = await garantirTaxa(supabase, {
         empresaId,
         eventoId: equipe?.evento_id ?? null,
         pagamentoId: pagamento.id,
