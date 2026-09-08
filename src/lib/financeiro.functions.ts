@@ -195,6 +195,17 @@ export const sincronizarCobranca = createServerFn({ method: "POST" })
     const pago = ["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"].includes(remota.status);
     if (!pago) return { status: remota.status };
 
+    const { data: taxaPendente } = await supabase
+      .from("taxas_plataforma")
+      .select("id, valor")
+      .eq("cobranca_id", cobranca.id)
+      .eq("status", "pendente")
+      .maybeSingle();
+
+    const valorCredito = taxaPendente
+      ? Math.max(0, Number(cobranca.valor) - Number(taxaPendente.valor))
+      : Number(cobranca.valor);
+
     await supabase
       .from("cobrancas")
       .update({ status: "pago", pago_em: new Date().toISOString() })
@@ -203,10 +214,17 @@ export const sincronizarCobranca = createServerFn({ method: "POST" })
     await supabase.from("movimentos_saldo").insert({
       empresa_id: cobranca.empresa_id,
       tipo: "credito",
-      valor: cobranca.valor,
+      valor: valorCredito,
       descricao: `Cobrança paga — ${cobranca.descricao}`,
       cobranca_id: cobranca.id,
     });
+
+    if (taxaPendente) {
+      await supabase
+        .from("taxas_plataforma")
+        .update({ status: "cobrada" })
+        .eq("id", taxaPendente.id);
+    }
 
     return { status: "pago" as const };
   });
