@@ -275,6 +275,18 @@ async function garantirTaxa(
     .maybeSingle();
   if (jaExiste) return null;
 
+  const { data: cobrancaComSplit } = await supabase
+    .from("cobrancas")
+    .select("id")
+    .eq("evento_id", args.eventoId)
+    .eq("status", "pago")
+    .not("parceiro_cobranca_id", "is", null)
+    .limit(1)
+    .maybeSingle();
+
+  const masterWalletId = process.env["ASAAS_MASTER_WALLET_ID"];
+  if (cobrancaComSplit && masterWalletId) return null;
+
   const { data: fechamentos } = await supabase
     .from("fechamentos")
     .select("valor_calculado, status, escalas!inner(equipes!inner(evento_id))")
