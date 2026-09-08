@@ -45,6 +45,12 @@ export const criarCobranca = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!empresa) throw new Error("Agência não encontrada.");
 
+    const { data: config } = await supabase
+      .from("configuracoes")
+      .select("modelo_cobranca, percentual_plataforma, taxa_fixa_pix")
+      .eq("empresa_id", empresaId)
+      .maybeSingle();
+
     let nome = empresa.nome;
     let documento = empresa.cnpj;
     let email = empresa.email_cobranca;
@@ -108,6 +114,20 @@ export const criarCobranca = createServerFn({ method: "POST" })
           .eq("id", clienteId);
       }
 
+      const masterWalletId = process.env["ASAAS_MASTER_WALLET_ID"];
+      const split =
+        masterWalletId &&
+        (config?.modelo_cobranca === "percentual_evento" ||
+          config?.modelo_cobranca === "assinatura_percentual") &&
+        Number(config.percentual_plataforma) > 0
+          ? [
+              {
+                walletId: masterWalletId,
+                percentualValue: Number(config.percentual_plataforma),
+              },
+            ]
+          : undefined;
+
       const cobranca = await criarCobrancaAsaas({
         clienteAsaasId,
         valor: data.valor,
@@ -115,7 +135,24 @@ export const criarCobranca = createServerFn({ method: "POST" })
         vencimento: data.vencimento,
         descricao: data.descricao,
         referenciaExterna: registro.id,
+        split,
       });
+
+      if (split?.length && config) {
+        const percentual = Number(config.percentual_plataforma);
+        const valorTaxa = arredonda((data.valor * percentual) / 100);
+        if (valorTaxa > 0) {
+          await supabase.from("taxas_plataforma").insert({
+            empresa_id: empresaId,
+            evento_id: data.eventoId ?? null,
+            cobranca_id: registro.id,
+            modelo: config.modelo_cobranca,
+            base_calculo: data.valor,
+            valor: valorTaxa,
+            status: "pendente",
+          });
+        }
+      }
 
       const pix =
         data.forma === "pix" ? await obterPixCopiaCola(cobranca.id) : null;
@@ -158,6 +195,17 @@ export const sincronizarCobranca = createServerFn({ method: "POST" })
     const pago = ["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"].includes(remota.status);
     if (!pago) return { status: remota.status };
 
+    const { data: taxaPendente } = await supabase
+      .from("taxas_plataforma")
+      .select("id, valor")
+      .eq("cobranca_id", cobranca.id)
+      .eq("status", "pendente")
+      .maybeSingle();
+
+    const valorCredito = taxaPendente
+      ? Math.max(0, Number(cobranca.valor) - Number(taxaPendente.valor))
+      : Number(cobranca.valor);
+
     await supabase
       .from("cobrancas")
       .update({ status: "pago", pago_em: new Date().toISOString() })
@@ -166,10 +214,17 @@ export const sincronizarCobranca = createServerFn({ method: "POST" })
     await supabase.from("movimentos_saldo").insert({
       empresa_id: cobranca.empresa_id,
       tipo: "credito",
-      valor: cobranca.valor,
+      valor: valorCredito,
       descricao: `Cobrança paga — ${cobranca.descricao}`,
       cobranca_id: cobranca.id,
     });
+
+    if (taxaPendente) {
+      await supabase
+        .from("taxas_plataforma")
+        .update({ status: "cobrada" })
+        .eq("id", taxaPendente.id);
+    }
 
     return { status: "pago" as const };
   });
@@ -219,6 +274,18 @@ async function garantirTaxa(
     .eq("evento_id", args.eventoId)
     .maybeSingle();
   if (jaExiste) return null;
+
+  const { data: cobrancaComSplit } = await supabase
+    .from("cobrancas")
+    .select("id")
+    .eq("evento_id", args.eventoId)
+    .eq("status", "pago")
+    .not("parceiro_cobranca_id", "is", null)
+    .limit(1)
+    .maybeSingle();
+
+  const masterWalletId = process.env["ASAAS_MASTER_WALLET_ID"];
+  if (cobrancaComSplit && masterWalletId) return null;
 
   const { data: fechamentos } = await supabase
     .from("fechamentos")

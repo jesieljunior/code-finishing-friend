@@ -48,6 +48,17 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
             .maybeSingle();
 
           if (cobranca && cobranca.status !== "pago") {
+            const { data: taxaPendente } = await supabaseAdmin
+              .from("taxas_plataforma")
+              .select("id, valor")
+              .eq("cobranca_id", cobranca.id)
+              .eq("status", "pendente")
+              .maybeSingle();
+
+            const valorCredito = taxaPendente
+              ? Math.max(0, Number(cobranca.valor) - Number(taxaPendente.valor))
+              : Number(cobranca.valor);
+
             await supabaseAdmin
               .from("cobrancas")
               .update({ status: "pago", pago_em: new Date().toISOString() })
@@ -56,10 +67,17 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
             await supabaseAdmin.from("movimentos_saldo").insert({
               empresa_id: cobranca.empresa_id,
               tipo: "credito",
-              valor: cobranca.valor,
+              valor: valorCredito,
               descricao: `Cobrança paga — ${cobranca.descricao}`,
               cobranca_id: cobranca.id,
             });
+
+            if (taxaPendente) {
+              await supabaseAdmin
+                .from("taxas_plataforma")
+                .update({ status: "cobrada" })
+                .eq("id", taxaPendente.id);
+            }
           }
         }
 

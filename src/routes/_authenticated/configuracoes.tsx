@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -148,6 +149,8 @@ function Configuracoes() {
           onSalvar={(patch) => salvar.mutate(patch)}
         />
       ) : null}
+
+      <IntegracaoAsaas />
     </AppShell>
   );
 }
@@ -242,6 +245,35 @@ function PlanoCobranca({
           : modelo === "taxa_fixa_pix"
             ? `Hoje: ${moeda(numero(taxaPix))} a cada Pix enviado.`
             : `Hoje: ${moeda(numero(mensalidade))} por mês + ${percentual}% por evento.`}
+      </p>
+    </section>
+  );
+}
+
+function IntegracaoAsaas() {
+  const webhookUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/public/webhooks/asaas`;
+
+  const copiar = async (texto: string) => {
+    await navigator.clipboard.writeText(texto);
+    toast.success("Copiado para a área de transferência.");
+  };
+
+  return (
+    <section className="mt-6 max-w-2xl rounded-md border border-border bg-card p-4">
+      <h2 className="text-sm font-semibold">Integração Asaas</h2>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Cole esse endereço no painel do Asaas, em <em>Configurações → Webhooks</em>, para receber confirmações de pagamento e transferência.
+      </p>
+
+      <div className="flex items-center gap-2">
+        <Input readOnly value={webhookUrl} className="text-xs" />
+        <Button size="icon" variant="outline" onClick={() => copiar(webhookUrl)}>
+          <Copy className="size-4" />
+        </Button>
+      </div>
+
+      <p className="mt-3 text-xs text-muted-foreground">
+        Use o token salvo em <code>ASAAS_WEBHOOK_TOKEN</code> no campo de autenticação do webhook.
       </p>
     </section>
   );
