@@ -45,6 +45,12 @@ export const criarCobranca = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!empresa) throw new Error("Agência não encontrada.");
 
+    const { data: config } = await supabase
+      .from("configuracoes")
+      .select("modelo_cobranca, percentual_plataforma, taxa_fixa_pix")
+      .eq("empresa_id", empresaId)
+      .maybeSingle();
+
     let nome = empresa.nome;
     let documento = empresa.cnpj;
     let email = empresa.email_cobranca;
@@ -108,6 +114,20 @@ export const criarCobranca = createServerFn({ method: "POST" })
           .eq("id", clienteId);
       }
 
+      const masterWalletId = process.env["ASAAS_MASTER_WALLET_ID"];
+      const split =
+        masterWalletId &&
+        (config?.modelo_cobranca === "percentual_evento" ||
+          config?.modelo_cobranca === "assinatura_percentual") &&
+        Number(config.percentual_plataforma) > 0
+          ? [
+              {
+                walletId: masterWalletId,
+                percentualValue: Number(config.percentual_plataforma),
+              },
+            ]
+          : undefined;
+
       const cobranca = await criarCobrancaAsaas({
         clienteAsaasId,
         valor: data.valor,
@@ -115,7 +135,24 @@ export const criarCobranca = createServerFn({ method: "POST" })
         vencimento: data.vencimento,
         descricao: data.descricao,
         referenciaExterna: registro.id,
+        split,
       });
+
+      if (split?.length && config) {
+        const percentual = Number(config.percentual_plataforma);
+        const valorTaxa = arredonda((data.valor * percentual) / 100);
+        if (valorTaxa > 0) {
+          await supabase.from("taxas_plataforma").insert({
+            empresa_id: empresaId,
+            evento_id: data.eventoId ?? null,
+            cobranca_id: registro.id,
+            modelo: config.modelo_cobranca,
+            base_calculo: data.valor,
+            valor: valorTaxa,
+            status: "pendente",
+          });
+        }
+      }
 
       const pix =
         data.forma === "pix" ? await obterPixCopiaCola(cobranca.id) : null;
