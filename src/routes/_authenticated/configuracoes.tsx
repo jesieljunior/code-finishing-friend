@@ -149,6 +149,8 @@ function Configuracoes() {
           onSalvar={(patch) => salvar.mutate(patch)}
         />
       ) : null}
+
+      <IntegracaoAsaas />
     </AppShell>
   );
 }
