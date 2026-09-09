@@ -14,6 +14,73 @@ export type Database = {
   }
   public: {
     Tables: {
+      assinaturas: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          cupom_id: string | null
+          empresa_id: string
+          id: string
+          mensalidade_override: number | null
+          observacoes: string | null
+          percentual_override: number | null
+          plano_id: string | null
+          status: string
+          taxa_fixa_override: number | null
+          trial_ate: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          cupom_id?: string | null
+          empresa_id: string
+          id?: string
+          mensalidade_override?: number | null
+          observacoes?: string | null
+          percentual_override?: number | null
+          plano_id?: string | null
+          status?: string
+          taxa_fixa_override?: number | null
+          trial_ate?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          cupom_id?: string | null
+          empresa_id?: string
+          id?: string
+          mensalidade_override?: number | null
+          observacoes?: string | null
+          percentual_override?: number | null
+          plano_id?: string | null
+          status?: string
+          taxa_fixa_override?: number | null
+          trial_ate?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinaturas_cupom_id_fkey"
+            columns: ["cupom_id"]
+            isOneToOne: false
+            referencedRelation: "cupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           atualizado_em: string
@@ -194,6 +261,56 @@ export type Database = {
             foreignKeyName: "configuracoes_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cupons: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          codigo: string
+          criado_em: string
+          empresa_id: string | null
+          id: string
+          limite_usos: number | null
+          tipo: string
+          usos: number
+          validade: string | null
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          codigo: string
+          criado_em?: string
+          empresa_id?: string | null
+          id?: string
+          limite_usos?: number | null
+          tipo?: string
+          usos?: number
+          validade?: string | null
+          valor?: number
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          codigo?: string
+          criado_em?: string
+          empresa_id?: string | null
+          id?: string
+          limite_usos?: number | null
+          tipo?: string
+          usos?: number
+          validade?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cupons_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -674,6 +791,72 @@ export type Database = {
           },
         ]
       }
+      planos: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          descricao: string | null
+          dias_trial: number
+          id: string
+          mensalidade: number
+          modelo: Database["public"]["Enums"]["modelo_cobranca"]
+          nome: string
+          ordem: number
+          percentual: number
+          taxa_fixa_pix: number
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          dias_trial?: number
+          id?: string
+          mensalidade?: number
+          modelo?: Database["public"]["Enums"]["modelo_cobranca"]
+          nome: string
+          ordem?: number
+          percentual?: number
+          taxa_fixa_pix?: number
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          dias_trial?: number
+          id?: string
+          mensalidade?: number
+          modelo?: Database["public"]["Enums"]["modelo_cobranca"]
+          nome?: string
+          ordem?: number
+          percentual?: number
+          taxa_fixa_pix?: number
+        }
+        Relationships: []
+      }
+      plataforma_usuarios: {
+        Row: {
+          criado_em: string
+          id: string
+          papel: Database["public"]["Enums"]["papel_plataforma"]
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          papel: Database["public"]["Enums"]["papel_plataforma"]
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          papel?: Database["public"]["Enums"]["papel_plataforma"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       pontos: {
         Row: {
           aprovado_em: string | null
@@ -866,6 +1049,7 @@ export type Database = {
     }
     Functions: {
       criar_empresa: { Args: { _cnpj: string; _nome: string }; Returns: string }
+      eh_equipe_plataforma: { Args: never; Returns: boolean }
       empresa_atual: { Args: never; Returns: string }
       empresa_da_equipe: { Args: { _equipe_id: string }; Returns: string }
       empresa_da_escala: { Args: { _escala_id: string }; Returns: string }
@@ -880,7 +1064,28 @@ export type Database = {
         }
         Returns: boolean
       }
+      preco_efetivo: {
+        Args: { _empresa_id: string }
+        Returns: {
+          cupom_codigo: string
+          em_trial: boolean
+          mensalidade: number
+          modelo: Database["public"]["Enums"]["modelo_cobranca"]
+          percentual: number
+          plano_nome: string
+          status: string
+          taxa_fixa_pix: number
+          trial_ate: string
+        }[]
+      }
       saldo_empresa: { Args: { _empresa_id: string }; Returns: number }
+      tem_papel_plataforma: {
+        Args: {
+          _papel: Database["public"]["Enums"]["papel_plataforma"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       forma_cobranca: "pix" | "boleto" | "cartao"
@@ -889,6 +1094,7 @@ export type Database = {
         | "percentual_evento"
         | "taxa_fixa_pix"
         | "assinatura_percentual"
+      papel_plataforma: "admin_master" | "suporte"
       papel_usuario: "admin" | "coordenador" | "financeiro" | "supervisor"
       status_cobranca:
         | "rascunho"
@@ -1051,6 +1257,7 @@ export const Constants = {
         "taxa_fixa_pix",
         "assinatura_percentual",
       ],
+      papel_plataforma: ["admin_master", "suporte"],
       papel_usuario: ["admin", "coordenador", "financeiro", "supervisor"],
       status_cobranca: [
         "rascunho",
