@@ -95,8 +95,9 @@ export async function criarCobrancaAsaas(dados: {
   referenciaExterna: string;
   split?: { walletId: string; percentualValue?: number; fixedValue?: number }[];
 }): Promise<CobrancaAsaas> {
+  // "cartao" vai como UNDEFINED para a fatura do Asaas aceitar crédito e débito.
   const billingType =
-    dados.forma === "pix" ? "PIX" : dados.forma === "boleto" ? "BOLETO" : "CREDIT_CARD";
+    dados.forma === "pix" ? "PIX" : dados.forma === "boleto" ? "BOLETO" : "UNDEFINED";
 
   return chamar<CobrancaAsaas>("/payments", {
     method: "POST",
@@ -112,14 +113,23 @@ export async function criarCobrancaAsaas(dados: {
   });
 }
 
-export async function obterPixCopiaCola(cobrancaId: string): Promise<string | null> {
+export async function obterPixQrCode(
+  cobrancaId: string,
+): Promise<{ payload: string | null; imagem: string | null }> {
   try {
-    const r = await chamar<{ payload?: string }>(`/payments/${cobrancaId}/pixQrCode`);
-    return r.payload ?? null;
+    const r = await chamar<{ payload?: string; encodedImage?: string }>(
+      `/payments/${cobrancaId}/pixQrCode`,
+    );
+    return { payload: r.payload ?? null, imagem: r.encodedImage ?? null };
   } catch {
-    return null;
+    return { payload: null, imagem: null };
   }
 }
+
+export async function obterPixCopiaCola(cobrancaId: string): Promise<string | null> {
+  return (await obterPixQrCode(cobrancaId)).payload;
+}
+
 
 export async function obterCobrancaAsaas(cobrancaId: string) {
   return chamar<{ id: string; status: string; paymentDate?: string }>(
