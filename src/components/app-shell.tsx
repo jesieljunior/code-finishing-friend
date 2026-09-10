@@ -31,6 +31,13 @@ interface ItemNav {
 const NAV: ItemNav[] = [
   { to: "/painel", label: "Painel", icone: Building2, mobile: true },
   {
+    to: "/saldo",
+    label: "Saldo",
+    icone: PiggyBank,
+    capacidade: "financeiro.gerenciar",
+  },
+
+  {
     to: "/eventos",
     label: "Eventos",
     icone: CalendarDays,
