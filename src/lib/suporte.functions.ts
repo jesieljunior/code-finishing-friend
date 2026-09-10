@@ -9,13 +9,21 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-async function exigirEquipe(supabase: unknown) {
-  const cliente = supabase as {
-    rpc: (n: string, a: Record<string, unknown>) => Promise<{ data: unknown }>;
-  };
-  const [master, suporte] = await Promise.all([
-    cliente.rpc("tem_papel_plataforma", { _user_id: undefined, _papel: "admin_master" }),
-    cliente.rpc("tem_papel_plataforma", { _user_id: undefined, _papel: "suporte" }),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function autorizar(supabase: any, userId: string) {
+  const { data } = await supabase
+    .from("plataforma_usuarios")
+    .select("papel")
+    .eq("user_id", userId);
+  const papeis = ((data ?? []) as { papel: string }[]).map((r) => r.papel);
+  if (!papeis.includes("suporte") && !papeis.includes("admin_master"))
+    throw new Error("Acesso restrito à equipe PayCrew.");
+  return papeis;
+}
+
+/** Recoloca o pagamento na fila e tenta o Pix de novo. */
+export const reenviarPixSuporte = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z.object({ pagamentoId: z.string().uuid() }).parse(input),
   )
@@ -30,6 +38,7 @@ async function exigirEquipe(supabase: unknown) {
     return enviarPix(supabaseAdmin, data.pagamentoId);
   });
 
+/** Confere no Asaas se a cobrança de qualquer agência já foi paga. */
 export const conferirCobrancaSuporte = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
