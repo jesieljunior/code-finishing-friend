@@ -31,6 +31,16 @@ export type Ponto = Tabelas["pontos"]["Row"];
 export type Ocorrencia = Tabelas["ocorrencias"]["Row"];
 export type Fechamento = Tabelas["fechamentos"]["Row"];
 export type Pagamento = Tabelas["pagamentos"]["Row"];
+export type Plano = Tabelas["planos"]["Row"];
+export type Cupom = Tabelas["cupons"]["Row"];
+export type Assinatura = Tabelas["assinaturas"]["Row"];
+export type PapelPlataforma = Enums["papel_plataforma"];
+
+export const ROTULO_PAPEL_PLATAFORMA: Record<PapelPlataforma, string> = {
+  admin_master: "Administração PayCrew",
+  suporte: "Suporte PayCrew",
+};
+
 
 /** Sequência oficial do PAS cap. 07. CANCELADO fica fora, é exceção. */
 export const ORDEM_STATUS_EVENTO: StatusEvento[] = [

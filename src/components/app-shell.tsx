@@ -6,12 +6,16 @@ import {
   ClipboardCheck,
   Contact,
   FileBarChart,
+  LifeBuoy,
   LogOut,
+  PiggyBank,
   Radio,
   Settings,
+  Shield,
   Users,
   Wallet,
 } from "lucide-react";
+
 import type { ComponentType, ReactNode } from "react";
 
 import { useSessao } from "@/hooks/use-sessao";
@@ -30,6 +34,13 @@ interface ItemNav {
 
 const NAV: ItemNav[] = [
   { to: "/painel", label: "Painel", icone: Building2, mobile: true },
+  {
+    to: "/saldo",
+    label: "Saldo",
+    icone: PiggyBank,
+    capacidade: "financeiro.gerenciar",
+  },
+
   {
     to: "/eventos",
     label: "Eventos",

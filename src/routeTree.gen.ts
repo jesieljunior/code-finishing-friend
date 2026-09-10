@@ -20,6 +20,7 @@ import { Route as AuthenticatedFreelancersRouteImport } from './routes/_authenti
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
+import { Route as AuthenticatedSaldoRouteImport } from './routes/_authenticated/saldo'
 import { Route as PontoTokenRouteImport } from './routes/ponto.$token'
 import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authenticated/eventos.index'
 import { Route as AuthenticatedEventosEventoIdRouteImport } from './routes/_authenticated/eventos.$eventoId'
@@ -83,6 +84,11 @@ const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   path: '/relatorios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSaldoRoute = AuthenticatedSaldoRouteImport.update({
+  id: '/saldo',
+  path: '/saldo',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const PontoTokenRoute = PontoTokenRouteImport.update({
   id: '/ponto/$token',
   path: '/ponto/$token',
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/saldo': typeof AuthenticatedSaldoRoute
   '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/saldo': typeof AuthenticatedSaldoRoute
   '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/saldo': typeof AuthenticatedSaldoRoute
   '/ponto/$token': typeof PontoTokenRoute
   '/_authenticated/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/_authenticated/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/painel'
     | '/relatorios'
+    | '/saldo'
     | '/ponto/$token'
     | '/eventos/$eventoId'
     | '/operacao/$eventoId'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/painel'
     | '/relatorios'
+    | '/saldo'
     | '/ponto/$token'
     | '/eventos/$eventoId'
     | '/operacao/$eventoId'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/painel'
     | '/_authenticated/relatorios'
+    | '/_authenticated/saldo'
     | '/ponto/$token'
     | '/_authenticated/eventos/$eventoId'
     | '/_authenticated/operacao/$eventoId'
@@ -319,6 +331,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/saldo': {
+      id: '/_authenticated/saldo'
+      path: '/saldo'
+      fullPath: '/saldo'
+      preLoaderRoute: typeof AuthenticatedSaldoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/ponto/$token': {
       id: '/ponto/$token'
       path: '/ponto/$token'
@@ -373,6 +392,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
+  AuthenticatedSaldoRoute: typeof AuthenticatedSaldoRoute
   AuthenticatedEventosEventoIdRoute: typeof AuthenticatedEventosEventoIdRoute
   AuthenticatedOperacaoEventoIdRoute: typeof AuthenticatedOperacaoEventoIdRoute
   AuthenticatedEventosIndexRoute: typeof AuthenticatedEventosIndexRoute
@@ -388,6 +408,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
+  AuthenticatedSaldoRoute: AuthenticatedSaldoRoute,
   AuthenticatedEventosEventoIdRoute: AuthenticatedEventosEventoIdRoute,
   AuthenticatedOperacaoEventoIdRoute: AuthenticatedOperacaoEventoIdRoute,
   AuthenticatedEventosIndexRoute: AuthenticatedEventosIndexRoute,

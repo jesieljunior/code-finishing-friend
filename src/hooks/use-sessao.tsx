@@ -13,7 +13,9 @@ export interface Sessao {
   usuario: Usuario;
   empresa: Empresa | null;
   papeis: PapelUsuario[];
+  papeisPlataforma: string[];
 }
+
 
 async function carregarSessao(): Promise<Sessao | null> {
   const { data: auth } = await supabase.auth.getUser();
@@ -33,6 +35,11 @@ async function carregarSessao(): Promise<Sessao | null> {
     .select("role")
     .eq("user_id", user.id);
 
+  const { data: papeisPlataforma } = await supabase
+    .from("plataforma_usuarios")
+    .select("papel")
+    .eq("user_id", user.id);
+
   let empresa: Empresa | null = null;
   if (usuario.empresa_id) {
     const { data } = await supabase
@@ -47,6 +54,7 @@ async function carregarSessao(): Promise<Sessao | null> {
     usuario,
     empresa,
     papeis: (roles ?? []).map((r) => r.role),
+    papeisPlataforma: (papeisPlataforma ?? []).map((r) => r.papel as string),
   };
 }
 
@@ -58,12 +66,18 @@ export function useSessao() {
   });
 
   const sessao = query.data ?? null;
+  const papeisPlataforma = sessao?.papeisPlataforma ?? [];
 
   return {
     ...query,
     sessao,
     empresaId: sessao?.usuario.empresa_id ?? null,
     papeis: sessao?.papeis ?? [],
+    papeisPlataforma,
+    ehAdminMaster: papeisPlataforma.includes("admin_master"),
+    ehSuporte: papeisPlataforma.includes("suporte"),
+    ehEquipePlataforma: papeisPlataforma.length > 0,
     pode: (c: Capacidade) => podeCom(sessao?.papeis ?? [], c),
   };
 }
+

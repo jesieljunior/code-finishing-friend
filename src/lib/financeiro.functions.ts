@@ -1,9 +1,7 @@
 /**
- * Fluxo financeiro real: saldo da agência, cobranças (aporte ou cliente),
- * taxa da plataforma e Pix de saída para o freelancer via Asaas.
- *
- * Regra do dinheiro: o Pix só sai contra saldo disponível. O saldo entra por
- * aporte da agência ou por cobrança paga pelo cliente do evento.
+ * Cobrança ao cliente do evento e Pix de saída ao freelancer.
+ * O preço da PayCrew vem do plano da agência (função preco_efetivo),
+ * nunca de valores editáveis pela própria agência.
  */
 
 import { createServerFn } from "@tanstack/react-start";
@@ -14,8 +12,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const arredonda = (n: number) => Math.round(n * 100) / 100;
 
 const cobrancaSchema = z.object({
-  tipo: z.enum(["aporte_agencia", "cobranca_cliente"]),
-  clienteId: z.string().uuid().nullable().optional(),
+  clienteId: z.string().uuid(),
   eventoId: z.string().uuid().nullable().optional(),
   valor: z.number().positive().max(1_000_000),
   forma: z.enum(["pix", "boleto", "cartao"]),
@@ -23,7 +20,7 @@ const cobrancaSchema = z.object({
   descricao: z.string().min(3).max(200),
 });
 
-/** Cria a cobrança no Asaas e guarda link/Pix copia-e-cola. */
+/** Cria a cobrança do cliente do evento no Asaas, com split da taxa. */
 export const criarCobranca = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => cobrancaSchema.parse(input))
@@ -38,52 +35,28 @@ export const criarCobranca = createServerFn({ method: "POST" })
     const empresaId = usuario?.empresa_id;
     if (!empresaId) throw new Error("Usuário sem agência.");
 
-    const { data: empresa } = await supabase
-      .from("empresas")
-      .select("nome, cnpj, email_cobranca")
-      .eq("id", empresaId)
+    const { data: cliente } = await supabase
+      .from("clientes")
+      .select("id, nome, cpf_cnpj, email, telefone")
+      .eq("id", data.clienteId)
       .maybeSingle();
-    if (!empresa) throw new Error("Agência não encontrada.");
+    if (!cliente) throw new Error("Cliente não encontrado.");
+    if (!cliente.cpf_cnpj)
+      throw new Error("Cadastre o CPF/CNPJ do cliente antes de cobrar.");
 
-    const { data: config } = await supabase
-      .from("configuracoes")
-      .select("modelo_cobranca, percentual_plataforma, taxa_fixa_pix")
-      .eq("empresa_id", empresaId)
-      .maybeSingle();
-
-    let nome = empresa.nome;
-    let documento = empresa.cnpj;
-    let email = empresa.email_cobranca;
-    let telefone: string | null = null;
-    let clienteId: string | null = null;
-
-    if (data.tipo === "cobranca_cliente") {
-      if (!data.clienteId) throw new Error("Selecione o cliente do evento.");
-      const { data: cliente } = await supabase
-        .from("clientes")
-        .select("id, nome, cpf_cnpj, email, telefone")
-        .eq("id", data.clienteId)
-        .maybeSingle();
-      if (!cliente) throw new Error("Cliente não encontrado.");
-      if (!cliente.cpf_cnpj)
-        throw new Error("Cadastre o CPF/CNPJ do cliente antes de cobrar.");
-      nome = cliente.nome;
-      documento = cliente.cpf_cnpj;
-      email = cliente.email;
-      telefone = cliente.telefone;
-      clienteId = cliente.id;
-    }
-
-    const documentoLimpo = (documento ?? "").replace(/\D+/g, "");
+    const documentoLimpo = cliente.cpf_cnpj.replace(/\D+/g, "");
     if (documentoLimpo.length !== 11 && documentoLimpo.length !== 14)
       throw new Error("CPF/CNPJ inválido para emitir a cobrança.");
+
+    const { precoEfetivo } = await import("./pagamentos.server");
+    const preco = await precoEfetivo(supabase, empresaId);
 
     const { data: registro, error: erroInsert } = await supabase
       .from("cobrancas")
       .insert({
         empresa_id: empresaId,
-        tipo: data.tipo,
-        cliente_id: clienteId,
+        tipo: "cobranca_cliente",
+        cliente_id: cliente.id,
         evento_id: data.eventoId ?? null,
         descricao: data.descricao,
         valor: data.valor,
@@ -100,32 +73,29 @@ export const criarCobranca = createServerFn({ method: "POST" })
         "./asaas.server"
       );
       const clienteAsaasId = await garantirClienteAsaas({
-        nome,
+        nome: cliente.nome,
         cpfCnpj: documentoLimpo,
-        email,
-        telefone,
-        referenciaExterna: clienteId ?? empresaId,
+        email: cliente.email,
+        telefone: cliente.telefone,
+        referenciaExterna: cliente.id,
       });
 
-      if (clienteId) {
-        await supabase
-          .from("clientes")
-          .update({ parceiro_cliente_id: clienteAsaasId })
-          .eq("id", clienteId);
-      }
+      await supabase
+        .from("clientes")
+        .update({ parceiro_cliente_id: clienteAsaasId })
+        .eq("id", cliente.id);
 
       const masterWalletId = process.env["ASAAS_MASTER_WALLET_ID"];
+      const usaPercentual =
+        preco &&
+        !preco.em_trial &&
+        (preco.modelo === "percentual_evento" ||
+          preco.modelo === "assinatura_percentual") &&
+        preco.percentual > 0;
+
       const split =
-        masterWalletId &&
-        (config?.modelo_cobranca === "percentual_evento" ||
-          config?.modelo_cobranca === "assinatura_percentual") &&
-        Number(config.percentual_plataforma) > 0
-          ? [
-              {
-                walletId: masterWalletId,
-                percentualValue: Number(config.percentual_plataforma),
-              },
-            ]
+        masterWalletId && usaPercentual
+          ? [{ walletId: masterWalletId, percentualValue: preco!.percentual }]
           : undefined;
 
       const cobranca = await criarCobrancaAsaas({
@@ -138,15 +108,14 @@ export const criarCobranca = createServerFn({ method: "POST" })
         split,
       });
 
-      if (split?.length && config) {
-        const percentual = Number(config.percentual_plataforma);
-        const valorTaxa = arredonda((data.valor * percentual) / 100);
+      if (split?.length && preco) {
+        const valorTaxa = arredonda((data.valor * preco.percentual) / 100);
         if (valorTaxa > 0) {
           await supabase.from("taxas_plataforma").insert({
             empresa_id: empresaId,
             evento_id: data.eventoId ?? null,
             cobranca_id: registro.id,
-            modelo: config.modelo_cobranca,
+            modelo: preco.modelo,
             base_calculo: data.valor,
             valor: valorTaxa,
             status: "pendente",
@@ -154,8 +123,7 @@ export const criarCobranca = createServerFn({ method: "POST" })
         }
       }
 
-      const pix =
-        data.forma === "pix" ? await obterPixCopiaCola(cobranca.id) : null;
+      const pix = data.forma === "pix" ? await obterPixCopiaCola(cobranca.id) : null;
 
       await supabase
         .from("cobrancas")
@@ -229,188 +197,13 @@ export const sincronizarCobranca = createServerFn({ method: "POST" })
     return { status: "pago" as const };
   });
 
-/**
- * Garante a taxa da plataforma conforme o modelo da agência:
- * - percentual_evento / assinatura_percentual: uma taxa por evento, sobre o
- *   total dos fechamentos aprovados;
- * - taxa_fixa_pix: uma taxa por Pix enviado.
- */
-async function garantirTaxa(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-  args: { empresaId: string; eventoId: string | null; pagamentoId: string; valorPix: number },
-) {
-
-  const { data: config } = await supabase
-    .from("configuracoes")
-    .select("modelo_cobranca, percentual_plataforma, taxa_fixa_pix")
-    .eq("empresa_id", args.empresaId)
-    .maybeSingle();
-  if (!config) return null;
-
-  if (config.modelo_cobranca === "taxa_fixa_pix") {
-    const valor = arredonda(Number(config.taxa_fixa_pix));
-    if (valor <= 0) return null;
-    const { data } = await supabase
-      .from("taxas_plataforma")
-      .insert({
-        empresa_id: args.empresaId,
-        pagamento_id: args.pagamentoId,
-        modelo: config.modelo_cobranca,
-        base_calculo: args.valorPix,
-        valor,
-        status: "cobrada",
-      })
-      .select("id, valor")
-      .maybeSingle();
-    return data ?? null;
-  }
-
-  if (!args.eventoId) return null;
-
-  const { data: jaExiste } = await supabase
-    .from("taxas_plataforma")
-    .select("id")
-    .eq("evento_id", args.eventoId)
-    .maybeSingle();
-  if (jaExiste) return null;
-
-  const { data: cobrancaComSplit } = await supabase
-    .from("cobrancas")
-    .select("id")
-    .eq("evento_id", args.eventoId)
-    .eq("status", "pago")
-    .not("parceiro_cobranca_id", "is", null)
-    .limit(1)
-    .maybeSingle();
-
-  const masterWalletId = process.env["ASAAS_MASTER_WALLET_ID"];
-  if (cobrancaComSplit && masterWalletId) return null;
-
-  const { data: fechamentos } = await supabase
-    .from("fechamentos")
-    .select("valor_calculado, status, escalas!inner(equipes!inner(evento_id))")
-    .eq("escalas.equipes.evento_id", args.eventoId)
-    .eq("status", "aprovado");
-
-  const base = (fechamentos ?? []).reduce(
-    (s: number, f: { valor_calculado: number }) => s + Number(f.valor_calculado),
-    0,
-  );
-  const valor = arredonda((base * Number(config.percentual_plataforma)) / 100);
-  if (valor <= 0) return null;
-
-  const { data } = await supabase
-    .from("taxas_plataforma")
-    .insert({
-      empresa_id: args.empresaId,
-      evento_id: args.eventoId,
-      modelo: config.modelo_cobranca,
-      base_calculo: base,
-      valor,
-      status: "cobrada",
-    })
-    .select("id, valor")
-    .maybeSingle();
-  return data ?? null;
-}
-
-/** Envia o Pix ao freelancer: valida saldo, debita, cobra a taxa e transfere. */
+/** Envia o Pix ao freelancer contra o saldo da agência. */
 export const executarPagamentoPix = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z.object({ pagamentoId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-
-    const { data: pagamento } = await supabase
-      .from("pagamentos")
-      .select(
-        "id, valor, status, fechamento_id, fechamentos(escala_id, escalas(freelancers(nome, chave_pix), equipes(evento_id, eventos(nome, empresa_id))))",
-      )
-      .eq("id", data.pagamentoId)
-      .maybeSingle();
-    if (!pagamento) throw new Error("Pagamento não encontrado.");
-    if (pagamento.status === "executado") throw new Error("Pagamento já executado.");
-
-    const fechamento: any = Array.isArray(pagamento.fechamentos)
-      ? pagamento.fechamentos[0]
-      : pagamento.fechamentos;
-    const escala: any = Array.isArray(fechamento?.escalas)
-      ? fechamento.escalas[0]
-      : fechamento?.escalas;
-    const freelancer: any = Array.isArray(escala?.freelancers)
-      ? escala.freelancers[0]
-      : escala?.freelancers;
-    const equipe: any = Array.isArray(escala?.equipes) ? escala.equipes[0] : escala?.equipes;
-    const evento: any = Array.isArray(equipe?.eventos) ? equipe.eventos[0] : equipe?.eventos;
-
-    const chavePix: string | undefined = freelancer?.chave_pix;
-    const empresaId: string | undefined = evento?.empresa_id;
-    if (!chavePix) throw new Error("Freelancer sem chave Pix cadastrada.");
-    if (!empresaId) throw new Error("Não foi possível identificar a agência do pagamento.");
-
-    const valor = Number(pagamento.valor);
-    const { data: saldo } = await supabase.rpc("saldo_empresa", { _empresa_id: empresaId });
-    if (Number(saldo ?? 0) < valor)
-      throw new Error(
-        `Saldo insuficiente: disponível R$ ${Number(saldo ?? 0).toFixed(2)}, necessário R$ ${valor.toFixed(2)}. Faça um aporte ou receba a cobrança do cliente.`,
-      );
-
-    try {
-      const { transferirPix } = await import("./asaas.server");
-      const transferencia = await transferirPix({
-        valor,
-        chavePix,
-        descricao: `PayCrew — ${freelancer?.nome ?? "freelancer"} · ${evento?.nome ?? "evento"}`,
-        referenciaExterna: pagamento.id,
-      });
-
-      await supabase
-        .from("pagamentos")
-        .update({
-          status: "executado",
-          executado_em: new Date().toISOString(),
-          txid_parceiro: transferencia.id,
-          parceiro_transferencia_id: transferencia.id,
-          chave_pix_destino: chavePix,
-          erro: null,
-        })
-        .eq("id", pagamento.id);
-
-      await supabase.from("movimentos_saldo").insert({
-        empresa_id: empresaId,
-        tipo: "debito",
-        valor,
-        descricao: `Pix para ${freelancer?.nome ?? "freelancer"}`,
-        pagamento_id: pagamento.id,
-      });
-
-      const taxa = await garantirTaxa(supabase, {
-        empresaId,
-        eventoId: equipe?.evento_id ?? null,
-        pagamentoId: pagamento.id,
-        valorPix: valor,
-      });
-
-      if (taxa) {
-        await supabase.from("movimentos_saldo").insert({
-          empresa_id: empresaId,
-          tipo: "debito",
-          valor: taxa.valor,
-          descricao: "Taxa PayCrew",
-          taxa_id: taxa.id,
-        });
-      }
-
-      return { ok: true, txid: transferencia.id, taxa: taxa?.valor ?? 0 };
-    } catch (e) {
-      const mensagem = e instanceof Error ? e.message : "Falha ao enviar o Pix.";
-      await supabase
-        .from("pagamentos")
-        .update({ status: "falhou", erro: mensagem })
-        .eq("id", pagamento.id);
-      throw new Error(mensagem);
-    }
+    const { enviarPix } = await import("./pagamentos.server");
+    return enviarPix(context.supabase, data.pagamentoId);
   });
