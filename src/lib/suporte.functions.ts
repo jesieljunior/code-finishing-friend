@@ -16,29 +16,6 @@ async function exigirEquipe(supabase: unknown) {
   const [master, suporte] = await Promise.all([
     cliente.rpc("tem_papel_plataforma", { _user_id: undefined, _papel: "admin_master" }),
     cliente.rpc("tem_papel_plataforma", { _user_id: undefined, _papel: "suporte" }),
-  ]);
-  return Boolean(master.data) || Boolean(suporte.data);
-}
-
-async function autorizar(supabase: unknown, userId: string) {
-  const cliente = supabase as {
-    from: (t: string) => {
-      select: (c: string) => {
-        eq: (c: string, v: string) => Promise<{ data: { papel: string }[] | null }>;
-      };
-    };
-  };
-  const { data } = await cliente.from("plataforma_usuarios").select("papel").eq("user_id", userId);
-  const papeis = (data ?? []).map((r) => r.papel);
-  if (!papeis.includes("suporte") && !papeis.includes("admin_master"))
-    throw new Error("Acesso restrito à equipe PayCrew.");
-  return papeis;
-}
-
-void exigirEquipe;
-
-export const reenviarPixSuporte = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z.object({ pagamentoId: z.string().uuid() }).parse(input),
   )
