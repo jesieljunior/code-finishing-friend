@@ -6,12 +6,16 @@ import {
   ClipboardCheck,
   Contact,
   FileBarChart,
+  LifeBuoy,
   LogOut,
+  PiggyBank,
   Radio,
   Settings,
+  Shield,
   Users,
   Wallet,
 } from "lucide-react";
+
 import type { ComponentType, ReactNode } from "react";
 
 import { useSessao } from "@/hooks/use-sessao";
