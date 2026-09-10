@@ -13,7 +13,9 @@ export interface Sessao {
   usuario: Usuario;
   empresa: Empresa | null;
   papeis: PapelUsuario[];
+  papeisPlataforma: string[];
 }
+
 
 async function carregarSessao(): Promise<Sessao | null> {
   const { data: auth } = await supabase.auth.getUser();
