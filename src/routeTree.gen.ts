@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedFechamentoRouteImport } from './routes/_authenticated/fechamento'
@@ -21,6 +22,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedSaldoRouteImport } from './routes/_authenticated/saldo'
+import { Route as AuthenticatedSuporteRouteImport } from './routes/_authenticated/suporte'
 import { Route as PontoTokenRouteImport } from './routes/ponto.$token'
 import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authenticated/eventos.index'
 import { Route as AuthenticatedEventosEventoIdRouteImport } from './routes/_authenticated/eventos.$eventoId'
@@ -41,6 +43,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   id: '/clientes',
@@ -89,6 +96,11 @@ const AuthenticatedSaldoRoute = AuthenticatedSaldoRouteImport.update({
   path: '/saldo',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSuporteRoute = AuthenticatedSuporteRouteImport.update({
+  id: '/suporte',
+  path: '/suporte',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const PontoTokenRoute = PontoTokenRouteImport.update({
   id: '/ponto/$token',
   path: '/ponto/$token',
@@ -127,6 +139,7 @@ const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/fechamento': typeof AuthenticatedFechamentoRoute
@@ -136,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/painel': typeof AuthenticatedPainelRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/saldo': typeof AuthenticatedSaldoRoute
+  '/suporte': typeof AuthenticatedSuporteRoute
   '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
@@ -146,6 +160,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/fechamento': typeof AuthenticatedFechamentoRoute
@@ -155,6 +170,7 @@ export interface FileRoutesByTo {
   '/painel': typeof AuthenticatedPainelRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/saldo': typeof AuthenticatedSaldoRoute
+  '/suporte': typeof AuthenticatedSuporteRoute
   '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
@@ -167,6 +183,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/fechamento': typeof AuthenticatedFechamentoRoute
@@ -176,6 +193,7 @@ export interface FileRoutesById {
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/saldo': typeof AuthenticatedSaldoRoute
+  '/_authenticated/suporte': typeof AuthenticatedSuporteRoute
   '/ponto/$token': typeof PontoTokenRoute
   '/_authenticated/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/_authenticated/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
@@ -188,6 +206,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/clientes'
     | '/configuracoes'
     | '/fechamento'
@@ -197,6 +216,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/relatorios'
     | '/saldo'
+    | '/suporte'
     | '/ponto/$token'
     | '/eventos/$eventoId'
     | '/operacao/$eventoId'
@@ -207,6 +227,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin'
     | '/clientes'
     | '/configuracoes'
     | '/fechamento'
@@ -216,6 +237,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/relatorios'
     | '/saldo'
+    | '/suporte'
     | '/ponto/$token'
     | '/eventos/$eventoId'
     | '/operacao/$eventoId'
@@ -227,6 +249,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/clientes'
     | '/_authenticated/configuracoes'
     | '/_authenticated/fechamento'
@@ -236,6 +259,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/_authenticated/relatorios'
     | '/_authenticated/saldo'
+    | '/_authenticated/suporte'
     | '/ponto/$token'
     | '/_authenticated/eventos/$eventoId'
     | '/_authenticated/operacao/$eventoId'
@@ -274,6 +298,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/clientes': {
       id: '/_authenticated/clientes'
@@ -338,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSaldoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/suporte': {
+      id: '/_authenticated/suporte'
+      path: '/suporte'
+      fullPath: '/suporte'
+      preLoaderRoute: typeof AuthenticatedSuporteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/ponto/$token': {
       id: '/ponto/$token'
       path: '/ponto/$token'
@@ -384,6 +422,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedFechamentoRoute: typeof AuthenticatedFechamentoRoute
@@ -393,6 +432,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedSaldoRoute: typeof AuthenticatedSaldoRoute
+  AuthenticatedSuporteRoute: typeof AuthenticatedSuporteRoute
   AuthenticatedEventosEventoIdRoute: typeof AuthenticatedEventosEventoIdRoute
   AuthenticatedOperacaoEventoIdRoute: typeof AuthenticatedOperacaoEventoIdRoute
   AuthenticatedEventosIndexRoute: typeof AuthenticatedEventosIndexRoute
@@ -400,6 +440,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedFechamentoRoute: AuthenticatedFechamentoRoute,
@@ -409,6 +450,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedSaldoRoute: AuthenticatedSaldoRoute,
+  AuthenticatedSuporteRoute: AuthenticatedSuporteRoute,
   AuthenticatedEventosEventoIdRoute: AuthenticatedEventosEventoIdRoute,
   AuthenticatedOperacaoEventoIdRoute: AuthenticatedOperacaoEventoIdRoute,
   AuthenticatedEventosIndexRoute: AuthenticatedEventosIndexRoute,
