@@ -112,13 +112,19 @@ export function AppShell({
   acoes?: ReactNode;
   children: ReactNode;
 }) {
-  const { sessao, pode } = useSessao();
+  const { sessao, pode, ehAdminMaster, ehEquipePlataforma } = useSessao();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const itens = NAV.filter((i) => !i.capacidade || pode(i.capacidade));
+  const itens = [
+    ...NAV.filter((i) => !i.capacidade || pode(i.capacidade)),
+    ...NAV_PLATAFORMA.filter((i) =>
+      i.somenteMaster ? ehAdminMaster : ehEquipePlataforma,
+    ),
+  ];
   const itensMobile = itens.filter((i) => i.mobile).slice(0, 5);
+
 
   async function sair() {
     await queryClient.cancelQueries();
