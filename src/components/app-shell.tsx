@@ -95,6 +95,12 @@ const NAV: ItemNav[] = [
   },
 ];
 
+const NAV_PLATAFORMA: (ItemNav & { somenteMaster?: boolean })[] = [
+  { to: "/suporte", label: "Suporte PayCrew", icone: LifeBuoy },
+  { to: "/admin", label: "Admin PayCrew", icone: Shield, somenteMaster: true },
+];
+
+
 export function AppShell({
   titulo,
   descricao,
