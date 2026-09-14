@@ -1,14 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Copy } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
 import { ErrorState, LoadingBloco } from "@/components/states";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/use-sessao";
@@ -17,7 +12,6 @@ import {
   ROTULO_MODELO_COBRANCA,
   moeda,
   type Configuracao,
-  type ModeloCobranca,
 } from "@/lib/dominio";
 
 
@@ -97,6 +91,18 @@ function Configuracoes() {
     },
   });
 
+  const plano = useQuery({
+    queryKey: ["configuracoes", "plano", empresaId],
+    enabled: Boolean(empresaId),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("preco_efetivo", {
+        _empresa_id: empresaId!,
+      });
+      if (error) throw error;
+      return data?.[0] ?? null;
+    },
+  });
+
   const salvar = useMutation({
     mutationFn: async (patch: Partial<Configuracao>) => {
       const { error } = await supabase
@@ -142,138 +148,60 @@ function Configuracoes() {
         </ul>
       ) : null}
 
-      {q.data ? (
-        <PlanoCobranca
-          config={q.data}
-          salvando={salvar.isPending}
-          onSalvar={(patch) => salvar.mutate(patch)}
-        />
-      ) : null}
-
-      <IntegracaoAsaas />
+      {plano.data ? <PlanoCobranca plano={plano.data} /> : null}
     </AppShell>
   );
 }
 
-const MODELOS: ModeloCobranca[] = [
-  "percentual_evento",
-  "taxa_fixa_pix",
-  "assinatura_percentual",
-];
-
 function PlanoCobranca({
-  config,
-  salvando,
-  onSalvar,
+  plano,
 }: {
-  config: Configuracao;
-  salvando: boolean;
-  onSalvar: (patch: Partial<Configuracao>) => void;
-}) {
-  const [percentual, setPercentual] = useState(String(config.percentual_plataforma));
-  const [taxaPix, setTaxaPix] = useState(String(config.taxa_fixa_pix));
-  const [mensalidade, setMensalidade] = useState(String(config.mensalidade));
-
-  const numero = (v: string) => Number(v.replace(",", "."));
-  const modelo = config.modelo_cobranca;
-
-  return (
-    <section className="mt-6 max-w-2xl rounded-md border border-border bg-card p-4">
-      <h2 className="text-sm font-semibold">Plano da plataforma</h2>
-      <p className="mb-3 text-xs text-muted-foreground">
-        Como o PayCrew cobra pela operação financeira da sua agência.
-      </p>
-
-      <ul className="space-y-2">
-        {MODELOS.map((m) => (
-          <li key={m}>
-            <button
-              type="button"
-              disabled={salvando}
-              onClick={() => onSalvar({ modelo_cobranca: m })}
-              className={`w-full rounded-md border px-3 py-2 text-left transition-colors ${
-                modelo === m
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:bg-accent"
-              }`}
-            >
-              <p className="text-sm font-medium">{ROTULO_MODELO_COBRANCA[m]}</p>
-              <p className="text-xs text-muted-foreground">
-                {DESCRICAO_MODELO_COBRANCA[m]}
-              </p>
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="perc">Percentual por evento (%)</Label>
-          <Input
-            id="perc"
-            inputMode="decimal"
-            value={percentual}
-            onChange={(e) => setPercentual(e.target.value)}
-            onBlur={() => onSalvar({ percentual_plataforma: numero(percentual) })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="tpix">Taxa fixa por Pix (R$)</Label>
-          <Input
-            id="tpix"
-            inputMode="decimal"
-            value={taxaPix}
-            onChange={(e) => setTaxaPix(e.target.value)}
-            onBlur={() => onSalvar({ taxa_fixa_pix: numero(taxaPix) })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="mens">Mensalidade (R$)</Label>
-          <Input
-            id="mens"
-            inputMode="decimal"
-            value={mensalidade}
-            onChange={(e) => setMensalidade(e.target.value)}
-            onBlur={() => onSalvar({ mensalidade: numero(mensalidade) })}
-          />
-        </div>
-      </div>
-
-      <p className="mt-3 text-xs text-muted-foreground">
-        {modelo === "percentual_evento"
-          ? `Hoje: ${percentual}% do total do evento, cobrado uma vez por evento.`
-          : modelo === "taxa_fixa_pix"
-            ? `Hoje: ${moeda(numero(taxaPix))} a cada Pix enviado.`
-            : `Hoje: ${moeda(numero(mensalidade))} por mês + ${percentual}% por evento.`}
-      </p>
-    </section>
-  );
-}
-
-function IntegracaoAsaas() {
-  const webhookUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/public/webhooks/asaas`;
-
-  const copiar = async (texto: string) => {
-    await navigator.clipboard.writeText(texto);
-    toast.success("Copiado para a área de transferência.");
+  plano: {
+    plano_nome: string | null;
+    modelo: keyof typeof ROTULO_MODELO_COBRANCA;
+    percentual: number;
+    taxa_fixa_pix: number;
+    mensalidade: number;
+    em_trial: boolean;
+    trial_ate: string | null;
+    cupom_codigo: string | null;
   };
-
+}) {
   return (
     <section className="mt-6 max-w-2xl rounded-md border border-border bg-card p-4">
-      <h2 className="text-sm font-semibold">Integração Asaas</h2>
-      <p className="mb-3 text-xs text-muted-foreground">
-        Cole esse endereço no painel do Asaas, em <em>Configurações → Webhooks</em>, para receber confirmações de pagamento e transferência.
-      </p>
-
-      <div className="flex items-center gap-2">
-        <Input readOnly value={webhookUrl} className="text-xs" />
-        <Button size="icon" variant="outline" onClick={() => copiar(webhookUrl)}>
-          <Copy className="size-4" />
-        </Button>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold">Plano {plano.plano_nome ?? "PayCrew"}</h2>
+          <p className="text-xs text-muted-foreground">
+            {ROTULO_MODELO_COBRANCA[plano.modelo]} · {DESCRICAO_MODELO_COBRANCA[plano.modelo]}
+          </p>
+        </div>
+        {plano.em_trial ? (
+          <span className="rounded-sm bg-accent px-2 py-1 text-xs font-medium">
+            Teste grátis até {plano.trial_ate}
+          </span>
+        ) : null}
       </div>
 
+      <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+        <div>
+          <p className="text-xs text-muted-foreground">Por evento</p>
+          <p className="font-medium">{plano.em_trial ? "Grátis" : `${plano.percentual}%`}</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Por Pix</p>
+          <p className="font-medium">{plano.em_trial ? "Grátis" : moeda(plano.taxa_fixa_pix)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Mensalidade</p>
+          <p className="font-medium">{plano.em_trial ? "Grátis" : moeda(plano.mensalidade)}</p>
+        </div>
+      </div>
+      {plano.cupom_codigo ? (
+        <p className="mt-3 text-xs text-muted-foreground">Cupom aplicado: {plano.cupom_codigo}</p>
+      ) : null}
       <p className="mt-3 text-xs text-muted-foreground">
-        Use o token salvo em <code>ASAAS_WEBHOOK_TOKEN</code> no campo de autenticação do webhook.
+        Condições definidas pela PayCrew. Fale com o suporte para alterar seu plano.
       </p>
     </section>
   );
