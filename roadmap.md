@@ -5,6 +5,9 @@
 - [x] Eventos: lista, criação, página do evento com ciclo, equipes e escalas
 - [x] Operação: painel do supervisor + página pública de ponto por QR Code
 - [x] Fechamento: gerar horas/valores, aprovar e contestar
-- [x] Financeiro: fila de Pix simulado, agendar/executar/tentar de novo
+- [x] Financeiro real: recarga self-service, cobrança de clientes e Pix via Asaas
+- [x] Portal da agência: plano somente leitura e saldo separado das cobranças
+- [x] Portal de suporte: consulta geral, conferência de cobranças e reprocessamento de Pix
+- [x] Portal admin master: agências, planos, trials, cupons, receita e equipe
 - [x] Relatórios: resumo do evento + exportação CSV
 - [x] Verificar build e rotas geradas

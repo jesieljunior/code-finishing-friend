@@ -81,10 +81,11 @@ function Configuracoes() {
     queryKey: ["configuracoes", empresaId],
     enabled: Boolean(empresaId),
     queryFn: async () => {
+      if (!empresaId) throw new Error("Agência não encontrada.");
       const { data, error } = await supabase
         .from("configuracoes")
         .select("*")
-        .eq("empresa_id", empresaId!)
+        .eq("empresa_id", empresaId)
         .maybeSingle();
       if (error) throw error;
       return data;
@@ -95,8 +96,9 @@ function Configuracoes() {
     queryKey: ["configuracoes", "plano", empresaId],
     enabled: Boolean(empresaId),
     queryFn: async () => {
+      if (!empresaId) throw new Error("Agência não encontrada.");
       const { data, error } = await supabase.rpc("preco_efetivo", {
-        _empresa_id: empresaId!,
+        _empresa_id: empresaId,
       });
       if (error) throw error;
       return data?.[0] ?? null;
@@ -105,10 +107,11 @@ function Configuracoes() {
 
   const salvar = useMutation({
     mutationFn: async (patch: Partial<Configuracao>) => {
+      if (!empresaId) throw new Error("Agência não encontrada.");
       const { error } = await supabase
         .from("configuracoes")
         .update(patch)
-        .eq("empresa_id", empresaId!);
+        .eq("empresa_id", empresaId);
       if (error) throw error;
     },
     onSuccess: () => {
