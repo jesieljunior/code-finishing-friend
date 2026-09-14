@@ -105,7 +105,7 @@ export const criarCobranca = createServerFn({ method: "POST" })
         vencimento: data.vencimento,
         descricao: data.descricao,
         referenciaExterna: registro.id,
-        split,
+        ...(split ? { split } : {}),
       });
 
       if (split?.length && preco) {
@@ -115,7 +115,10 @@ export const criarCobranca = createServerFn({ method: "POST" })
             empresa_id: empresaId,
             evento_id: data.eventoId ?? null,
             cobranca_id: registro.id,
-            modelo: preco.modelo,
+            modelo: preco.modelo as
+              | "percentual_evento"
+              | "taxa_fixa_pix"
+              | "assinatura_percentual",
             base_calculo: data.valor,
             valor: valorTaxa,
             status: "pendente",

@@ -19,6 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSessao } from "@/hooks/use-sessao";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { ROTULO_MODELO_COBRANCA, moeda, type ModeloCobranca } from "@/lib/dominio";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -282,7 +283,13 @@ function Planos() {
   });
 
   const salvar = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Database["public"]["Tables"]["planos"]["Update"];
+    }) => {
       const { error } = await supabase.from("planos").update(patch).eq("id", id);
       if (error) throw error;
     },
@@ -341,7 +348,11 @@ function Planos() {
                 <Label>Modelo</Label>
                 <Select
                   value={p.modelo}
-                  onValueChange={(v) => salvar.mutate({ id: p.id, patch: { modelo: v } })}
+                  onValueChange={(v) => {
+                    if (MODELOS.includes(v as ModeloCobranca)) {
+                      salvar.mutate({ id: p.id, patch: { modelo: v as ModeloCobranca } });
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />

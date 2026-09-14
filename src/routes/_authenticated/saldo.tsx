@@ -60,8 +60,9 @@ function Saldo() {
     queryKey: ["saldo", "total", empresaId],
     enabled: Boolean(empresaId),
     queryFn: async () => {
+      if (!empresaId) throw new Error("Agência não encontrada.");
       const { data, error } = await supabase.rpc("saldo_empresa", {
-        _empresa_id: empresaId!,
+        _empresa_id: empresaId,
       });
       if (error) throw error;
       return Number(data ?? 0);
@@ -215,7 +216,9 @@ function Saldo() {
                 <Button
                   size="icon"
                   variant="outline"
-                  onClick={() => copiar(resultado.pixCopiaCola!)}
+                  onClick={() => {
+                    if (resultado.pixCopiaCola) void copiar(resultado.pixCopiaCola);
+                  }}
                 >
                   <Copy className="size-4" />
                 </Button>
@@ -263,7 +266,13 @@ function Saldo() {
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={c.status} />
                 {c.pix_copia_cola ? (
-                  <Button size="sm" variant="ghost" onClick={() => copiar(c.pix_copia_cola!)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (c.pix_copia_cola) void copiar(c.pix_copia_cola);
+                    }}
+                  >
                     <Copy className="size-4" /> Pix
                   </Button>
                 ) : null}

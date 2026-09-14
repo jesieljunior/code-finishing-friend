@@ -63,9 +63,6 @@ function Financeiro() {
   const chamarSincronizar = useServerFn(sincronizarCobranca);
   const chamarPix = useServerFn(executarPagamentoPix);
 
-  const [tipo, setTipo] = useState<"aporte_agencia" | "cobranca_cliente">(
-    "cobranca_cliente",
-  );
   const [clienteId, setClienteId] = useState("");
   const [eventoId, setEventoId] = useState("");
   const [valor, setValor] = useState("");
@@ -91,6 +88,7 @@ function Financeiro() {
       const { data, error } = await supabase
         .from("cobrancas")
         .select("*, clientes(nome), eventos(nome)")
+        .eq("tipo", "cobranca_cliente")
         .order("criado_em", { ascending: false });
       if (error) throw error;
       return data;
@@ -152,13 +150,12 @@ function Financeiro() {
       if (!Number.isFinite(numero) || numero <= 0) throw new Error("Informe um valor válido.");
       return chamarCriarCobranca({
         data: {
-          tipo,
-          clienteId: tipo === "cobranca_cliente" ? clienteId || null : null,
+          clienteId,
           eventoId: eventoId || null,
           valor: numero,
           forma,
           vencimento,
-          descricao: descricao.trim() || "Aporte PayCrew",
+          descricao: descricao.trim() || "Cobrança do evento",
         },
       });
     },
@@ -275,7 +272,7 @@ function Financeiro() {
       <Tabs defaultValue="pagamentos">
         <TabsList>
           <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
-          <TabsTrigger value="entradas">Entradas de saldo</TabsTrigger>
+          <TabsTrigger value="entradas">Cobranças de clientes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pagamentos" className="mt-4">
@@ -371,22 +368,8 @@ function Financeiro() {
 
         <TabsContent value="entradas" className="mt-4 space-y-4">
           <section className="rounded-md border border-border bg-card p-4">
-            <h2 className="mb-3 text-sm font-semibold">Nova entrada de saldo</h2>
+            <h2 className="mb-3 text-sm font-semibold">Cobrar cliente do evento</h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label>Origem</Label>
-                <Select value={tipo} onValueChange={(v) => setTipo(v as typeof tipo)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cobranca_cliente">Cobrar o cliente do evento</SelectItem>
-                    <SelectItem value="aporte_agencia">Aporte da agência</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {tipo === "cobranca_cliente" ? (
                 <div className="space-y-1.5">
                   <Label>Cliente</Label>
                   <Select value={clienteId} onValueChange={setClienteId}>
@@ -403,7 +386,6 @@ function Financeiro() {
                     </SelectContent>
                   </Select>
                 </div>
-              ) : null}
 
               <div className="space-y-1.5">
                 <Label>Evento (opcional)</Label>
@@ -485,7 +467,7 @@ function Financeiro() {
           ) : cobrancas.data.length === 0 ? (
             <EmptyState
               titulo="Nenhuma cobrança emitida"
-              descricao="Cobre o cliente do evento ou faça um aporte para liberar os Pix."
+              descricao="Emita uma cobrança vinculada a um cliente e evento."
             />
           ) : (
             <ul className="space-y-2">
@@ -500,7 +482,7 @@ function Financeiro() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{c.descricao}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {c.tipo === "aporte_agencia" ? "Aporte da agência" : cliente?.nome}
+                         {cliente?.nome}
                         {evento ? ` · ${evento.nome}` : ""} · vence {c.vencimento ?? "—"}
                       </p>
                       {c.erro ? (

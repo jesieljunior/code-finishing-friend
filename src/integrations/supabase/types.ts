@@ -927,6 +927,7 @@ export type Database = {
         Row: {
           atualizado_em: string
           base_calculo: number
+          cobranca_id: string | null
           criado_em: string
           empresa_id: string
           evento_id: string | null
@@ -939,6 +940,7 @@ export type Database = {
         Insert: {
           atualizado_em?: string
           base_calculo?: number
+          cobranca_id?: string | null
           criado_em?: string
           empresa_id: string
           evento_id?: string | null
@@ -951,6 +953,7 @@ export type Database = {
         Update: {
           atualizado_em?: string
           base_calculo?: number
+          cobranca_id?: string | null
           criado_em?: string
           empresa_id?: string
           evento_id?: string | null
@@ -961,6 +964,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "taxas_plataforma_cobranca_id_fkey"
+            columns: ["cobranca_id"]
+            isOneToOne: false
+            referencedRelation: "cobrancas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "taxas_plataforma_empresa_id_fkey"
             columns: ["empresa_id"]
