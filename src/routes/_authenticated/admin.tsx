@@ -348,7 +348,11 @@ function Planos() {
                 <Label>Modelo</Label>
                 <Select
                   value={p.modelo}
-                  onValueChange={(v) => salvar.mutate({ id: p.id, patch: { modelo: v } })}
+                  onValueChange={(v) => {
+                    if (MODELOS.includes(v as ModeloCobranca)) {
+                      salvar.mutate({ id: p.id, patch: { modelo: v as ModeloCobranca } });
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
