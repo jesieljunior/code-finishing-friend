@@ -225,7 +225,6 @@ function FormCliente({
         </div>
       </section>
 
-      </div>
       <div className="space-y-1.5">
         <Label htmlFor="cliente-obs">Observações</Label>
         <Textarea
@@ -281,7 +280,7 @@ function Clientes() {
               <Plus className="size-4" /> Novo cliente
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
               <DialogTitle>Novo cliente</DialogTitle>
             </DialogHeader>
