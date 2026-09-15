@@ -5,7 +5,9 @@ import {
   CalendarDays,
   ClipboardCheck,
   Contact,
+  FileText,
   FileBarChart,
+  FlaskConical,
   LifeBuoy,
   LogOut,
   PiggyBank,
@@ -82,6 +84,18 @@ const NAV: ItemNav[] = [
     capacidade: "cadastros.gerenciar",
   },
   {
+    to: "/equipe",
+    label: "Equipe e acessos",
+    icone: Users,
+    capacidade: "configuracoes.gerenciar",
+  },
+  {
+    to: "/documentos-fiscais",
+    label: "Documentos fiscais",
+    icone: FileText,
+    capacidade: "financeiro.gerenciar",
+  },
+  {
     to: "/relatorios",
     label: "Relatórios",
     icone: FileBarChart,
@@ -98,6 +112,7 @@ const NAV: ItemNav[] = [
 const NAV_PLATAFORMA: (ItemNav & { somenteMaster?: boolean })[] = [
   { to: "/suporte", label: "Suporte PayCrew", icone: LifeBuoy },
   { to: "/admin", label: "Admin PayCrew", icone: Shield, somenteMaster: true },
+  { to: "/acessos-teste", label: "Acessos de teste", icone: FlaskConical, somenteMaster: true },
 ];
 
 
