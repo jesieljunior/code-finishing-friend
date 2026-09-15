@@ -26,6 +26,9 @@ export const iniciarRecarga = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
+    const { exigirCapacidade } = await import("./autorizacao.server");
+    await exigirCapacidade(supabase, userId, "financeiro.gerenciar");
+
     const { data: usuario } = await supabase
       .from("usuarios")
       .select("empresa_id, nome, email")
@@ -63,6 +66,23 @@ export const iniciarRecarga = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (erroInsert || !registro) throw new Error(erroInsert?.message ?? "Falha ao registrar.");
+
+    const { data: funding, error: erroFunding } = await supabase
+      .from("fundings")
+      .insert({
+        empresa_id: empresaId,
+        finalidade: "Pagamentos de prestadores",
+        valor_total: data.valor,
+        status: "pending",
+        cobranca_id: registro.id,
+        chave_idempotencia: crypto.randomUUID(),
+        criado_por: userId,
+      })
+      .select("id")
+      .single();
+    if (erroFunding || !funding) {
+      throw new Error(erroFunding?.message ?? "Falha ao registrar a disponibilização.");
+    }
 
     try {
       const { garantirClienteAsaas, criarCobrancaAsaas, obterPixQrCode } = await import(

@@ -27,6 +27,9 @@ export const criarCobranca = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
+    const { exigirCapacidade } = await import("./autorizacao.server");
+    await exigirCapacidade(supabase, userId, "financeiro.gerenciar");
+
     const { data: usuario } = await supabase
       .from("usuarios")
       .select("empresa_id")
@@ -151,7 +154,9 @@ export const sincronizarCobranca = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    const { exigirCapacidade } = await import("./autorizacao.server");
+    await exigirCapacidade(supabase, userId, "financeiro.gerenciar");
     const { data: cobranca } = await supabase
       .from("cobrancas")
       .select("id, empresa_id, valor, status, parceiro_cobranca_id, descricao")
@@ -207,6 +212,8 @@ export const executarPagamentoPix = createServerFn({ method: "POST" })
     z.object({ pagamentoId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { exigirCapacidade } = await import("./autorizacao.server");
+    await exigirCapacidade(context.supabase, context.userId, "financeiro.gerenciar");
     const { enviarPix } = await import("./pagamentos.server");
     return enviarPix(context.supabase, data.pagamentoId);
   });
