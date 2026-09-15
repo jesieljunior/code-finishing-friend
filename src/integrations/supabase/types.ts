@@ -14,6 +14,64 @@ export type Database = {
   }
   public: {
     Tables: {
+      alocacoes_funding: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          empresa_id: string
+          funding_id: string
+          id: string
+          lote_id: string
+          valor_devolvido: number
+          valor_reservado: number
+          valor_utilizado: number
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          empresa_id: string
+          funding_id: string
+          id?: string
+          lote_id: string
+          valor_devolvido?: number
+          valor_reservado: number
+          valor_utilizado?: number
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          empresa_id?: string
+          funding_id?: string
+          id?: string
+          lote_id?: string
+          valor_devolvido?: number
+          valor_reservado?: number
+          valor_utilizado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alocacoes_funding_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alocacoes_funding_funding_id_fkey"
+            columns: ["funding_id"]
+            isOneToOne: false
+            referencedRelation: "fundings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alocacoes_funding_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_pagamento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assinaturas: {
         Row: {
           atualizado_em: string
@@ -83,40 +141,106 @@ export type Database = {
       }
       clientes: {
         Row: {
+          ativo: boolean
           atualizado_em: string
+          bairro: string | null
+          canal_preferencial: string | null
+          cep: string | null
+          cidade: string | null
+          codigo_municipio: string | null
+          codigo_servico: string | null
+          complemento: string | null
           cpf_cnpj: string | null
           criado_em: string
           email: string | null
+          email_financeiro: string | null
           empresa_id: string
           id: string
+          inscricao_estadual: string | null
+          inscricao_estadual_isento: boolean
+          inscricao_municipal: string | null
+          logradouro: string | null
           nome: string
+          nome_fantasia: string | null
+          numero: string | null
           observacoes: string | null
           parceiro_cliente_id: string | null
+          razao_social: string | null
+          regime_fiscal: string | null
+          responsavel_cargo: string | null
+          responsavel_nome: string | null
           telefone: string | null
+          tipo_pessoa: Database["public"]["Enums"]["tipo_pessoa"]
+          uf: string | null
+          vencimento_preferencial: number | null
         }
         Insert: {
+          ativo?: boolean
           atualizado_em?: string
+          bairro?: string | null
+          canal_preferencial?: string | null
+          cep?: string | null
+          cidade?: string | null
+          codigo_municipio?: string | null
+          codigo_servico?: string | null
+          complemento?: string | null
           cpf_cnpj?: string | null
           criado_em?: string
           email?: string | null
+          email_financeiro?: string | null
           empresa_id: string
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_estadual_isento?: boolean
+          inscricao_municipal?: string | null
+          logradouro?: string | null
           nome: string
+          nome_fantasia?: string | null
+          numero?: string | null
           observacoes?: string | null
           parceiro_cliente_id?: string | null
+          razao_social?: string | null
+          regime_fiscal?: string | null
+          responsavel_cargo?: string | null
+          responsavel_nome?: string | null
           telefone?: string | null
+          tipo_pessoa?: Database["public"]["Enums"]["tipo_pessoa"]
+          uf?: string | null
+          vencimento_preferencial?: number | null
         }
         Update: {
+          ativo?: boolean
           atualizado_em?: string
+          bairro?: string | null
+          canal_preferencial?: string | null
+          cep?: string | null
+          cidade?: string | null
+          codigo_municipio?: string | null
+          codigo_servico?: string | null
+          complemento?: string | null
           cpf_cnpj?: string | null
           criado_em?: string
           email?: string | null
+          email_financeiro?: string | null
           empresa_id?: string
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_estadual_isento?: boolean
+          inscricao_municipal?: string | null
+          logradouro?: string | null
           nome?: string
+          nome_fantasia?: string | null
+          numero?: string | null
           observacoes?: string | null
           parceiro_cliente_id?: string | null
+          razao_social?: string | null
+          regime_fiscal?: string | null
+          responsavel_cargo?: string | null
+          responsavel_nome?: string | null
           telefone?: string | null
+          tipo_pessoa?: Database["public"]["Enums"]["tipo_pessoa"]
+          uf?: string | null
+          vencimento_preferencial?: number | null
         }
         Relationships: [
           {
@@ -210,6 +334,63 @@ export type Database = {
           },
         ]
       }
+      cobrancas_plataforma: {
+        Row: {
+          assinatura_id: string | null
+          atualizado_em: string
+          competencia: string | null
+          criado_em: string
+          descricao: string
+          empresa_id: string
+          id: string
+          referencia_parceiro: string | null
+          status: Database["public"]["Enums"]["status_cobranca"]
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          assinatura_id?: string | null
+          atualizado_em?: string
+          competencia?: string | null
+          criado_em?: string
+          descricao: string
+          empresa_id: string
+          id?: string
+          referencia_parceiro?: string | null
+          status?: Database["public"]["Enums"]["status_cobranca"]
+          tipo: string
+          valor: number
+        }
+        Update: {
+          assinatura_id?: string | null
+          atualizado_em?: string
+          competencia?: string | null
+          criado_em?: string
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          referencia_parceiro?: string | null
+          status?: Database["public"]["Enums"]["status_cobranca"]
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cobrancas_plataforma_assinatura_id_fkey"
+            columns: ["assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "assinaturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_plataforma_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracoes: {
         Row: {
           atualizado_em: string
@@ -266,6 +447,56 @@ export type Database = {
           },
         ]
       }
+      convites_equipe: {
+        Row: {
+          aceito_em: string | null
+          atualizado_em: string
+          convidado_por: string
+          criado_em: string
+          email: string
+          empresa_id: string
+          expira_em: string
+          id: string
+          papel: Database["public"]["Enums"]["papel_usuario"]
+          revogado_em: string | null
+          token_hash: string
+        }
+        Insert: {
+          aceito_em?: string | null
+          atualizado_em?: string
+          convidado_por: string
+          criado_em?: string
+          email: string
+          empresa_id: string
+          expira_em: string
+          id?: string
+          papel: Database["public"]["Enums"]["papel_usuario"]
+          revogado_em?: string | null
+          token_hash: string
+        }
+        Update: {
+          aceito_em?: string | null
+          atualizado_em?: string
+          convidado_por?: string
+          criado_em?: string
+          email?: string
+          empresa_id?: string
+          expira_em?: string
+          id?: string
+          papel?: Database["public"]["Enums"]["papel_usuario"]
+          revogado_em?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convites_equipe_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cupons: {
         Row: {
           ativo: boolean
@@ -312,6 +543,139 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentos_fiscais: {
+        Row: {
+          arquivo_caminho: string | null
+          arquivo_nome: string | null
+          arquivo_tipo: string | null
+          atualizado_em: string
+          chave_acesso: string | null
+          cliente_id: string | null
+          cobranca_plataforma_id: string | null
+          competencia: string | null
+          criado_em: string
+          criado_por: string
+          destinatario_documento: string | null
+          destinatario_nome: string | null
+          emissor_documento: string | null
+          emissor_nome: string | null
+          empresa_id: string
+          evento_id: string | null
+          freelancer_id: string | null
+          id: string
+          numero: string | null
+          observacoes: string | null
+          pagamento_id: string | null
+          serie: string | null
+          status: Database["public"]["Enums"]["status_documento_fiscal"]
+          tipo: Database["public"]["Enums"]["tipo_documento_fiscal"]
+          validado_em: string | null
+          validado_por: string | null
+          valor: number | null
+        }
+        Insert: {
+          arquivo_caminho?: string | null
+          arquivo_nome?: string | null
+          arquivo_tipo?: string | null
+          atualizado_em?: string
+          chave_acesso?: string | null
+          cliente_id?: string | null
+          cobranca_plataforma_id?: string | null
+          competencia?: string | null
+          criado_em?: string
+          criado_por: string
+          destinatario_documento?: string | null
+          destinatario_nome?: string | null
+          emissor_documento?: string | null
+          emissor_nome?: string | null
+          empresa_id: string
+          evento_id?: string | null
+          freelancer_id?: string | null
+          id?: string
+          numero?: string | null
+          observacoes?: string | null
+          pagamento_id?: string | null
+          serie?: string | null
+          status?: Database["public"]["Enums"]["status_documento_fiscal"]
+          tipo: Database["public"]["Enums"]["tipo_documento_fiscal"]
+          validado_em?: string | null
+          validado_por?: string | null
+          valor?: number | null
+        }
+        Update: {
+          arquivo_caminho?: string | null
+          arquivo_nome?: string | null
+          arquivo_tipo?: string | null
+          atualizado_em?: string
+          chave_acesso?: string | null
+          cliente_id?: string | null
+          cobranca_plataforma_id?: string | null
+          competencia?: string | null
+          criado_em?: string
+          criado_por?: string
+          destinatario_documento?: string | null
+          destinatario_nome?: string | null
+          emissor_documento?: string | null
+          emissor_nome?: string | null
+          empresa_id?: string
+          evento_id?: string | null
+          freelancer_id?: string | null
+          id?: string
+          numero?: string | null
+          observacoes?: string | null
+          pagamento_id?: string | null
+          serie?: string | null
+          status?: Database["public"]["Enums"]["status_documento_fiscal"]
+          tipo?: Database["public"]["Enums"]["tipo_documento_fiscal"]
+          validado_em?: string | null
+          validado_por?: string | null
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_fiscais_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_fiscais_cobranca_plataforma_id_fkey"
+            columns: ["cobranca_plataforma_id"]
+            isOneToOne: false
+            referencedRelation: "cobrancas_plataforma"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_fiscais_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_fiscais_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_fiscais_freelancer_id_fkey"
+            columns: ["freelancer_id"]
+            isOneToOne: false
+            referencedRelation: "freelancers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_fiscais_pagamento_id_fkey"
+            columns: ["pagamento_id"]
+            isOneToOne: false
+            referencedRelation: "pagamentos"
             referencedColumns: ["id"]
           },
         ]
@@ -615,6 +979,179 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fundings: {
+        Row: {
+          atualizado_em: string
+          chave_idempotencia: string
+          cobranca_id: string | null
+          criado_em: string
+          criado_por: string
+          empresa_id: string
+          finalidade: string
+          id: string
+          referencia_parceiro: string | null
+          status: Database["public"]["Enums"]["status_funding"]
+          valor_devolvido: number
+          valor_disponivel: number
+          valor_reservado: number
+          valor_total: number
+          valor_utilizado: number
+        }
+        Insert: {
+          atualizado_em?: string
+          chave_idempotencia: string
+          cobranca_id?: string | null
+          criado_em?: string
+          criado_por: string
+          empresa_id: string
+          finalidade: string
+          id?: string
+          referencia_parceiro?: string | null
+          status?: Database["public"]["Enums"]["status_funding"]
+          valor_devolvido?: number
+          valor_disponivel?: number
+          valor_reservado?: number
+          valor_total: number
+          valor_utilizado?: number
+        }
+        Update: {
+          atualizado_em?: string
+          chave_idempotencia?: string
+          cobranca_id?: string | null
+          criado_em?: string
+          criado_por?: string
+          empresa_id?: string
+          finalidade?: string
+          id?: string
+          referencia_parceiro?: string | null
+          status?: Database["public"]["Enums"]["status_funding"]
+          valor_devolvido?: number
+          valor_disponivel?: number
+          valor_reservado?: number
+          valor_total?: number
+          valor_utilizado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fundings_cobranca_id_fkey"
+            columns: ["cobranca_id"]
+            isOneToOne: false
+            referencedRelation: "cobrancas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fundings_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      logs_auditoria: {
+        Row: {
+          acao: string
+          ator_contexto: string
+          ator_id: string
+          criado_em: string
+          detalhes: Json
+          empresa_id: string | null
+          id: string
+          recurso_id: string | null
+          recurso_tipo: string
+          resultado: string
+        }
+        Insert: {
+          acao: string
+          ator_contexto: string
+          ator_id: string
+          criado_em?: string
+          detalhes?: Json
+          empresa_id?: string | null
+          id?: string
+          recurso_id?: string | null
+          recurso_tipo: string
+          resultado: string
+        }
+        Update: {
+          acao?: string
+          ator_contexto?: string
+          ator_id?: string
+          criado_em?: string
+          detalhes?: Json
+          empresa_id?: string | null
+          id?: string
+          recurso_id?: string | null
+          recurso_tipo?: string
+          resultado?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logs_auditoria_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lotes_pagamento: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          atualizado_em: string
+          chave_idempotencia: string | null
+          criado_em: string
+          descricao: string
+          empresa_id: string
+          evento_id: string | null
+          id: string
+          status: Database["public"]["Enums"]["status_lote_pagamento"]
+          valor_total: number
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          atualizado_em?: string
+          chave_idempotencia?: string | null
+          criado_em?: string
+          descricao: string
+          empresa_id: string
+          evento_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["status_lote_pagamento"]
+          valor_total?: number
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          atualizado_em?: string
+          chave_idempotencia?: string | null
+          criado_em?: string
+          descricao?: string
+          empresa_id?: string
+          evento_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["status_lote_pagamento"]
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lotes_pagamento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lotes_pagamento_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
             referencedColumns: ["id"]
           },
         ]
@@ -1089,6 +1626,10 @@ export type Database = {
         }[]
       }
       saldo_empresa: { Args: { _empresa_id: string }; Returns: number }
+      tem_capacidade: {
+        Args: { _capacidade: string; _user_id: string }
+        Returns: boolean
+      }
       tem_papel_plataforma: {
         Args: {
           _papel: Database["public"]["Enums"]["papel_plataforma"]
@@ -1112,6 +1653,12 @@ export type Database = {
         | "pago"
         | "vencido"
         | "cancelado"
+      status_documento_fiscal:
+        | "pending"
+        | "received"
+        | "validated_manually"
+        | "rejected"
+        | "cancelled"
       status_escala: "convidado" | "confirmado" | "recusado" | "substituido"
       status_evento:
         | "planejamento"
@@ -1126,11 +1673,35 @@ export type Database = {
         | "arquivado"
         | "cancelado"
       status_fechamento: "pendente_aprovacao" | "aprovado" | "contestado"
+      status_funding:
+        | "draft"
+        | "pending"
+        | "available"
+        | "partially_reserved"
+        | "reserved"
+        | "consumed"
+        | "refund_pending"
+        | "refunded"
+        | "failed"
+        | "cancelled"
+      status_lote_pagamento:
+        | "draft"
+        | "awaiting_approval"
+        | "approved"
+        | "funding_pending"
+        | "funded"
+        | "processing"
+        | "partially_paid"
+        | "paid"
+        | "failed"
+        | "cancelled"
       status_pagamento: "pendente" | "agendado" | "executado" | "falhou"
       status_ponto: "pendente" | "aprovado" | "recusado"
       status_taxa: "pendente" | "cobrada" | "isenta"
       tipo_cobranca: "aporte_agencia" | "cobranca_cliente"
+      tipo_documento_fiscal: "nfse" | "nfe" | "rpa" | "receipt" | "other"
       tipo_movimento: "credito" | "debito"
+      tipo_pessoa: "pf" | "pj"
       tipo_ponto: "entrada" | "saida" | "inicio_intervalo" | "fim_intervalo"
       tipo_valor: "diaria" | "hora"
     }
@@ -1276,6 +1847,13 @@ export const Constants = {
         "vencido",
         "cancelado",
       ],
+      status_documento_fiscal: [
+        "pending",
+        "received",
+        "validated_manually",
+        "rejected",
+        "cancelled",
+      ],
       status_escala: ["convidado", "confirmado", "recusado", "substituido"],
       status_evento: [
         "planejamento",
@@ -1291,11 +1869,37 @@ export const Constants = {
         "cancelado",
       ],
       status_fechamento: ["pendente_aprovacao", "aprovado", "contestado"],
+      status_funding: [
+        "draft",
+        "pending",
+        "available",
+        "partially_reserved",
+        "reserved",
+        "consumed",
+        "refund_pending",
+        "refunded",
+        "failed",
+        "cancelled",
+      ],
+      status_lote_pagamento: [
+        "draft",
+        "awaiting_approval",
+        "approved",
+        "funding_pending",
+        "funded",
+        "processing",
+        "partially_paid",
+        "paid",
+        "failed",
+        "cancelled",
+      ],
       status_pagamento: ["pendente", "agendado", "executado", "falhou"],
       status_ponto: ["pendente", "aprovado", "recusado"],
       status_taxa: ["pendente", "cobrada", "isenta"],
       tipo_cobranca: ["aporte_agencia", "cobranca_cliente"],
+      tipo_documento_fiscal: ["nfse", "nfe", "rpa", "receipt", "other"],
       tipo_movimento: ["credito", "debito"],
+      tipo_pessoa: ["pf", "pj"],
       tipo_ponto: ["entrada", "saida", "inicio_intervalo", "fim_intervalo"],
       tipo_valor: ["diaria", "hora"],
     },
