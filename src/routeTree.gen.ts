@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAcessosTesteRouteImport } from './routes/_authenticated/acessos-teste'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedDocumentosFiscaisRouteImport } from './routes/_authenticated/documentos-fiscais'
+import { Route as AuthenticatedEquipeRouteImport } from './routes/_authenticated/equipe'
 import { Route as AuthenticatedFechamentoRouteImport } from './routes/_authenticated/fechamento'
 import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authenticated/financeiro'
 import { Route as AuthenticatedFreelancersRouteImport } from './routes/_authenticated/freelancers'
@@ -44,6 +47,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAcessosTesteRoute =
+  AuthenticatedAcessosTesteRouteImport.update({
+    id: '/acessos-teste',
+    path: '/acessos-teste',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -60,6 +69,17 @@ const AuthenticatedConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDocumentosFiscaisRoute =
+  AuthenticatedDocumentosFiscaisRouteImport.update({
+    id: '/documentos-fiscais',
+    path: '/documentos-fiscais',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEquipeRoute = AuthenticatedEquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedFechamentoRoute = AuthenticatedFechamentoRouteImport.update({
   id: '/fechamento',
   path: '/fechamento',
@@ -139,9 +159,12 @@ const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/acessos-teste': typeof AuthenticatedAcessosTesteRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/documentos-fiscais': typeof AuthenticatedDocumentosFiscaisRoute
+  '/equipe': typeof AuthenticatedEquipeRoute
   '/fechamento': typeof AuthenticatedFechamentoRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/freelancers': typeof AuthenticatedFreelancersRoute
@@ -160,9 +183,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/acessos-teste': typeof AuthenticatedAcessosTesteRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/documentos-fiscais': typeof AuthenticatedDocumentosFiscaisRoute
+  '/equipe': typeof AuthenticatedEquipeRoute
   '/fechamento': typeof AuthenticatedFechamentoRoute
   '/financeiro': typeof AuthenticatedFinanceiroRoute
   '/freelancers': typeof AuthenticatedFreelancersRoute
@@ -183,9 +209,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/acessos-teste': typeof AuthenticatedAcessosTesteRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/documentos-fiscais': typeof AuthenticatedDocumentosFiscaisRoute
+  '/_authenticated/equipe': typeof AuthenticatedEquipeRoute
   '/_authenticated/fechamento': typeof AuthenticatedFechamentoRoute
   '/_authenticated/financeiro': typeof AuthenticatedFinanceiroRoute
   '/_authenticated/freelancers': typeof AuthenticatedFreelancersRoute
@@ -206,9 +235,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/acessos-teste'
     | '/admin'
     | '/clientes'
     | '/configuracoes'
+    | '/documentos-fiscais'
+    | '/equipe'
     | '/fechamento'
     | '/financeiro'
     | '/freelancers'
@@ -227,9 +259,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/acessos-teste'
     | '/admin'
     | '/clientes'
     | '/configuracoes'
+    | '/documentos-fiscais'
+    | '/equipe'
     | '/fechamento'
     | '/financeiro'
     | '/freelancers'
@@ -249,9 +284,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/acessos-teste'
     | '/_authenticated/admin'
     | '/_authenticated/clientes'
     | '/_authenticated/configuracoes'
+    | '/_authenticated/documentos-fiscais'
+    | '/_authenticated/equipe'
     | '/_authenticated/fechamento'
     | '/_authenticated/financeiro'
     | '/_authenticated/freelancers'
@@ -299,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/acessos-teste': {
+      id: '/_authenticated/acessos-teste'
+      path: '/acessos-teste'
+      fullPath: '/acessos-teste'
+      preLoaderRoute: typeof AuthenticatedAcessosTesteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -318,6 +363,20 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/configuracoes'
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documentos-fiscais': {
+      id: '/_authenticated/documentos-fiscais'
+      path: '/documentos-fiscais'
+      fullPath: '/documentos-fiscais'
+      preLoaderRoute: typeof AuthenticatedDocumentosFiscaisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/equipe': {
+      id: '/_authenticated/equipe'
+      path: '/equipe'
+      fullPath: '/equipe'
+      preLoaderRoute: typeof AuthenticatedEquipeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/fechamento': {
@@ -422,9 +481,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAcessosTesteRoute: typeof AuthenticatedAcessosTesteRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedDocumentosFiscaisRoute: typeof AuthenticatedDocumentosFiscaisRoute
+  AuthenticatedEquipeRoute: typeof AuthenticatedEquipeRoute
   AuthenticatedFechamentoRoute: typeof AuthenticatedFechamentoRoute
   AuthenticatedFinanceiroRoute: typeof AuthenticatedFinanceiroRoute
   AuthenticatedFreelancersRoute: typeof AuthenticatedFreelancersRoute
@@ -440,9 +502,12 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAcessosTesteRoute: AuthenticatedAcessosTesteRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedDocumentosFiscaisRoute: AuthenticatedDocumentosFiscaisRoute,
+  AuthenticatedEquipeRoute: AuthenticatedEquipeRoute,
   AuthenticatedFechamentoRoute: AuthenticatedFechamentoRoute,
   AuthenticatedFinanceiroRoute: AuthenticatedFinanceiroRoute,
   AuthenticatedFreelancersRoute: AuthenticatedFreelancersRoute,
