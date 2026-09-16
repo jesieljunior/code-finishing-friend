@@ -249,7 +249,7 @@ function PaginaPonto() {
   );
 }
 
-/** Captura uma selfie usando a câmera frontal do celular. */
+/** Captura uma selfie após dois piscamentos detectados pela câmera frontal. */
 async function tirarSelfie(): Promise<string> {
   if (!window.isSecureContext) {
     throw new Error("A câmera só funciona em uma conexão segura (HTTPS).");
@@ -275,12 +275,41 @@ async function tirarSelfie(): Promise<string> {
     throw new Error("Não foi possível acessar a câmera. Verifique a permissão e tente novamente.");
   }
 
+  const video = document.createElement("video");
+  const aviso = document.createElement("div");
+  video.srcObject = stream;
+  video.muted = true;
+  video.playsInline = true;
+  video.setAttribute("playsinline", "true");
+  Object.assign(video.style, {
+    position: "fixed",
+    inset: "50% auto auto 50%",
+    zIndex: "2147483646",
+    width: "min(88vw, 420px)",
+    aspectRatio: "3 / 4",
+    transform: "translate(-50%, -50%)",
+    objectFit: "cover",
+    borderRadius: "12px",
+    background: "#111",
+  });
+  aviso.textContent = "Olhe para a câmera e pisque duas vezes";
+  Object.assign(aviso.style, {
+    position: "fixed",
+    left: "50%",
+    bottom: "12%",
+    zIndex: "2147483647",
+    transform: "translateX(-50%)",
+    padding: "10px 14px",
+    borderRadius: "8px",
+    color: "white",
+    background: "rgba(0, 0, 0, .75)",
+    font: "600 14px sans-serif",
+    textAlign: "center",
+    whiteSpace: "nowrap",
+  });
+  document.body.append(video, aviso);
+
   try {
-    const video = document.createElement("video");
-    video.srcObject = stream;
-    video.muted = true;
-    video.playsInline = true;
-    video.setAttribute("playsinline", "true");
     await new Promise<void>((resolve) => {
       if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
         resolve();
@@ -289,13 +318,60 @@ async function tirarSelfie(): Promise<string> {
       video.addEventListener("loadedmetadata", () => resolve(), { once: true });
     });
     await video.play();
-    await new Promise((r) => setTimeout(r, 800));
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    canvas.getContext("2d")!.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.7);
+
+    const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
+    const vision = await FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm",
+    );
+    const landmarker = await FaceLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath:
+          "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+      },
+      runningMode: "VIDEO",
+      numFaces: 1,
+      outputFaceBlendshapes: true,
+    });
+
+    return await new Promise<string>((resolve, reject) => {
+      const inicio = performance.now();
+      let olhosFechados = false;
+      let piscadas = 0;
+      let ultimoTempo = -1;
+
+      const verificar = () => {
+        if (performance.now() - inicio > 15_000) {
+          reject(new Error("Não detectamos dois piscamentos. Tente novamente olhando para a câmera."));
+          return;
+        }
+        const resultado = landmarker.detectForVideo(video, performance.now());
+        const categorias = resultado.faceBlendshapes?.[0]?.categories ?? [];
+        const esquerdo = categorias.find((item) => item.categoryName === "eyeBlinkLeft")?.score ?? 0;
+        const direito = categorias.find((item) => item.categoryName === "eyeBlinkRight")?.score ?? 0;
+        const fechado = (esquerdo + direito) / 2 > 0.55;
+        if (fechado) olhosFechados = true;
+        if (olhosFechados && !fechado && performance.now() - ultimoTempo > 250) {
+          piscadas += 1;
+          ultimoTempo = performance.now();
+          olhosFechados = false;
+          aviso.textContent = `Piscamentos detectados: ${piscadas}/2`;
+        }
+        if (piscadas >= 2 && !fechado) {
+          const canvas = document.createElement("canvas");
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 480;
+          canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
+          landmarker.close();
+          resolve(canvas.toDataURL("image/jpeg", 0.7));
+          return;
+        }
+        requestAnimationFrame(verificar);
+      };
+      requestAnimationFrame(verificar);
+    });
   } finally {
+    video.remove();
+    aviso.remove();
     stream.getTracks().forEach((t) => t.stop());
   }
 }

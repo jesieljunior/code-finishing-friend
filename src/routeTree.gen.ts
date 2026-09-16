@@ -31,6 +31,7 @@ import { Route as AuthenticatedEventosIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedEventosEventoIdRouteImport } from './routes/_authenticated/eventos.$eventoId'
 import { Route as AuthenticatedOperacaoIndexRouteImport } from './routes/_authenticated/operacao.index'
 import { Route as AuthenticatedOperacaoEventoIdRouteImport } from './routes/_authenticated/operacao.$eventoId'
+import { Route as ApiInternalProcessarPagamentosRouteImport } from './routes/api/internal/processar-pagamentos'
 import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
 
 const IndexRoute = IndexRouteImport.update({
@@ -150,6 +151,12 @@ const AuthenticatedOperacaoEventoIdRoute =
     path: '/operacao/$eventoId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiInternalProcessarPagamentosRoute =
+  ApiInternalProcessarPagamentosRouteImport.update({
+    id: '/api/internal/processar-pagamentos',
+    path: '/api/internal/processar-pagamentos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
   id: '/api/public/webhooks/asaas',
   path: '/api/public/webhooks/asaas',
@@ -176,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
+  '/api/internal/processar-pagamentos': typeof ApiInternalProcessarPagamentosRoute
   '/eventos/': typeof AuthenticatedEventosIndexRoute
   '/operacao/': typeof AuthenticatedOperacaoIndexRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
@@ -200,6 +208,7 @@ export interface FileRoutesByTo {
   '/ponto/$token': typeof PontoTokenRoute
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
+  '/api/internal/processar-pagamentos': typeof ApiInternalProcessarPagamentosRoute
   '/eventos': typeof AuthenticatedEventosIndexRoute
   '/operacao': typeof AuthenticatedOperacaoIndexRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
@@ -226,6 +235,7 @@ export interface FileRoutesById {
   '/ponto/$token': typeof PontoTokenRoute
   '/_authenticated/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/_authenticated/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
+  '/api/internal/processar-pagamentos': typeof ApiInternalProcessarPagamentosRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
   '/_authenticated/operacao/': typeof AuthenticatedOperacaoIndexRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/ponto/$token'
     | '/eventos/$eventoId'
     | '/operacao/$eventoId'
+    | '/api/internal/processar-pagamentos'
     | '/eventos/'
     | '/operacao/'
     | '/api/public/webhooks/asaas'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/ponto/$token'
     | '/eventos/$eventoId'
     | '/operacao/$eventoId'
+    | '/api/internal/processar-pagamentos'
     | '/eventos'
     | '/operacao'
     | '/api/public/webhooks/asaas'
@@ -301,6 +313,7 @@ export interface FileRouteTypes {
     | '/ponto/$token'
     | '/_authenticated/eventos/$eventoId'
     | '/_authenticated/operacao/$eventoId'
+    | '/api/internal/processar-pagamentos'
     | '/_authenticated/eventos/'
     | '/_authenticated/operacao/'
     | '/api/public/webhooks/asaas'
@@ -311,6 +324,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   PontoTokenRoute: typeof PontoTokenRoute
+  ApiInternalProcessarPagamentosRoute: typeof ApiInternalProcessarPagamentosRoute
   ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
 }
 
@@ -470,6 +484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOperacaoEventoIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/internal/processar-pagamentos': {
+      id: '/api/internal/processar-pagamentos'
+      path: '/api/internal/processar-pagamentos'
+      fullPath: '/api/internal/processar-pagamentos'
+      preLoaderRoute: typeof ApiInternalProcessarPagamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/asaas': {
       id: '/api/public/webhooks/asaas'
       path: '/api/public/webhooks/asaas'
@@ -530,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   PontoTokenRoute: PontoTokenRoute,
+  ApiInternalProcessarPagamentosRoute: ApiInternalProcessarPagamentosRoute,
   ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
 }
 export const routeTree = rootRouteImport
