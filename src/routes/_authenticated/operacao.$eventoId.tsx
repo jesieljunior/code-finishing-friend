@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Image, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -58,6 +58,11 @@ function OperacaoEvento() {
   const { eventoId } = Route.useParams();
   const queryClient = useQueryClient();
   const { sessao } = useSessao();
+  const [fotoAberta, setFotoAberta] = useState<{
+    url: string;
+    nome: string;
+    registradoEm: string;
+  } | null>(null);
   const [manual, setManual] = useState<{ escalaId: string; nome: string } | null>(null);
   const [ocorrencia, setOcorrencia] = useState<{ escalaId: string; nome: string } | null>(
     null,
@@ -83,7 +88,7 @@ function OperacaoEvento() {
       const { data, error } = await supabase
         .from("equipes")
         .select(
-          "id, nome, escalas(id, status, freelancers(nome, funcao), pontos(id, tipo, metodo, registrado_em, status), ocorrencias(id, descricao, criado_em))",
+          "id, nome, escalas(id, status, freelancers(nome, funcao), pontos(id, tipo, metodo, registrado_em, status, foto_url), ocorrencias(id, descricao, criado_em))",
         )
         .eq("evento_id", eventoId)
         .order("criado_em");
@@ -118,6 +123,21 @@ function OperacaoEvento() {
     onSuccess: invalidar,
     onError: (e: Error) => toast.error(e.message),
   });
+
+  async function abrirFoto(
+    caminho: string,
+    nome: string,
+    registradoEm: string,
+  ) {
+    const { data, error } = await supabase.storage
+      .from("selfies-ponto")
+      .createSignedUrl(caminho, 300);
+    if (error) {
+      toast.error("Não foi possível abrir a foto deste ponto.");
+      return;
+    }
+    setFotoAberta({ url: data.signedUrl, nome, registradoEm });
+  }
 
   if (evento.isPending) {
     return (
@@ -220,6 +240,23 @@ function OperacaoEvento() {
                                 </span>
                                 <span className="flex items-center gap-1.5">
                                   <StatusBadge status={p.status} />
+                                  {p.foto_url ? (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7"
+                                      title="Ver foto do registro de ponto"
+                                      onClick={() =>
+                                        void abrirFoto(
+                                          p.foto_url!,
+                                          es.freelancers?.nome ?? "Colaborador",
+                                          p.registrado_em,
+                                        )
+                                      }
+                                    >
+                                      <Image className="size-3.5" /> Foto
+                                    </Button>
+                                  ) : null}
                                   {p.status === "pendente" ? (
                                     <>
                                       <Button
@@ -307,6 +344,27 @@ function OperacaoEvento() {
               onFechar={() => setOcorrencia(null)}
               onSalvo={invalidar}
             />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(fotoAberta)} onOpenChange={(o) => !o && setFotoAberta(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Foto do ponto — {fotoAberta?.nome}</DialogTitle>
+          </DialogHeader>
+          {fotoAberta ? (
+            <div className="space-y-3">
+              <img
+                src={fotoAberta.url}
+                alt={`Registro de ponto de ${fotoAberta.nome}`}
+                className="max-h-[65vh] w-full rounded-md border border-border object-contain"
+              />
+              <p className="text-xs text-muted-foreground">
+                Registrada em {new Date(fotoAberta.registradoEm).toLocaleString("pt-BR")}.
+                A foto é evidência do ponto e não compõe o cálculo da folha.
+              </p>
+            </div>
           ) : null}
         </DialogContent>
       </Dialog>
