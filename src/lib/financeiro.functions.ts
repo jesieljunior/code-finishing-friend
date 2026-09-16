@@ -195,6 +195,16 @@ export const sincronizarCobranca = createServerFn({ method: "POST" })
       cobranca_id: cobranca.id,
     });
 
+    await supabase
+      .from("fundings")
+      .update({
+        status: "available",
+        valor_disponivel: valorCredito,
+        referencia_parceiro: cobranca.parceiro_cobranca_id,
+      })
+      .eq("cobranca_id", cobranca.id)
+      .eq("status", "pending");
+
     if (taxaPendente) {
       await supabase
         .from("taxas_plataforma")

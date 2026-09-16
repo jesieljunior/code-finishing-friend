@@ -72,6 +72,16 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
               cobranca_id: cobranca.id,
             });
 
+            await supabaseAdmin
+              .from("fundings")
+              .update({
+                status: "available",
+                valor_disponivel: valorCredito,
+                referencia_parceiro: corpo.payment.id,
+              })
+              .eq("cobranca_id", cobranca.id)
+              .eq("status", "pending");
+
             if (taxaPendente) {
               await supabaseAdmin
                 .from("taxas_plataforma")
