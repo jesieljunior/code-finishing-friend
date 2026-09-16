@@ -68,6 +68,7 @@ function Financeiro() {
   const [valor, setValor] = useState("");
   const [forma, setForma] = useState<"pix" | "boleto" | "cartao">("pix");
   const [vencimento, setVencimento] = useState(hojeMais(3));
+  const [dataPagamento, setDataPagamento] = useState(hojeMais(1));
   const [descricao, setDescricao] = useState("");
 
   const saldo = useQuery({
@@ -212,9 +213,13 @@ function Financeiro() {
 
   const agendar = useMutation({
     mutationFn: async (id: string) => {
+      const data = new Date(`${dataPagamento}T09:00:00`);
+      if (!dataPagamento || Number.isNaN(data.getTime()) || data <= new Date()) {
+        throw new Error("Escolha uma data futura para o pagamento.");
+      }
       const { error } = await supabase
         .from("pagamentos")
-        .update({ status: "agendado", data_agendada: new Date().toISOString() })
+        .update({ status: "agendado", data_agendada: data.toISOString() })
         .eq("id", id);
       if (error) throw error;
     },
@@ -288,6 +293,21 @@ function Financeiro() {
         </TabsList>
 
         <TabsContent value="pagamentos" className="mt-4">
+          <div className="mb-4 flex flex-wrap items-end gap-3 rounded-md border border-border bg-card p-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="data-pagamento">Data dos pagamentos agendados</Label>
+              <Input
+                id="data-pagamento"
+                type="date"
+                min={hojeMais(1)}
+                value={dataPagamento}
+                onChange={(e) => setDataPagamento(e.target.value)}
+              />
+            </div>
+            <p className="pb-2 text-xs text-muted-foreground">
+              A data será usada ao agendar cada pagamento da fila.
+            </p>
+          </div>
           {fila.isPending ? (
             <LoadingBloco />
           ) : fila.isError ? (
@@ -323,6 +343,11 @@ function Financeiro() {
                       ) : null}
                       {p?.erro ? (
                         <p className="mt-0.5 text-xs text-destructive">{p.erro}</p>
+                      ) : null}
+                      {p?.data_agendada ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          agendado para {dataHora(p.data_agendada)}
+                        </p>
                       ) : null}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
