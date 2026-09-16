@@ -251,18 +251,45 @@ function PaginaPonto() {
 
 /** Captura uma selfie usando a câmera frontal do celular. */
 async function tirarSelfie(): Promise<string> {
-  const stream = await navigator.mediaDevices
-    .getUserMedia({ video: { facingMode: "user" } })
-    .catch(() => {
-      throw new Error("Não foi possível acessar a câmera.");
+  if (!window.isSecureContext) {
+    throw new Error("A câmera só funciona em uma conexão segura (HTTPS).");
+  }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new Error("Este dispositivo ou navegador não oferece acesso à câmera.");
+  }
+
+  let stream: MediaStream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: { ideal: "user" }, width: { ideal: 1280 }, height: { ideal: 720 } },
     });
+  } catch (error) {
+    const nome = error instanceof DOMException ? error.name : "";
+    if (nome === "NotAllowedError" || nome === "PermissionDeniedError") {
+      throw new Error("Permita o acesso à câmera no navegador para registrar o ponto.");
+    }
+    if (nome === "NotFoundError" || nome === "DevicesNotFoundError") {
+      throw new Error("Nenhuma câmera foi encontrada neste dispositivo.");
+    }
+    throw new Error("Não foi possível acessar a câmera. Verifique a permissão e tente novamente.");
+  }
+
   try {
     const video = document.createElement("video");
     video.srcObject = stream;
     video.muted = true;
     video.playsInline = true;
+    video.setAttribute("playsinline", "true");
+    await new Promise<void>((resolve) => {
+      if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+        resolve();
+        return;
+      }
+      video.addEventListener("loadedmetadata", () => resolve(), { once: true });
+    });
     await video.play();
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(r, 800));
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;

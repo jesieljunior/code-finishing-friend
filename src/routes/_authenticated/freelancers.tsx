@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Pencil, Plus } from "lucide-react";
+import { Download, FileSpreadsheet, Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 import { AppShell } from "@/components/app-shell";
 import { EmptyState, ErrorState, LoadingBloco } from "@/components/states";
@@ -182,13 +183,90 @@ function FormFreelancer({
 }
 
 function Freelancers() {
+  const { empresaId } = useSessao();
   const [busca, setBusca] = useState("");
   const [soAtivos, setSoAtivos] = useState(true);
   const [novo, setNovo] = useState(false);
   const [editando, setEditando] = useState<Freelancer | null>(null);
+  const [importando, setImportando] = useState(false);
+
+  function baixarModelo() {
+    const planilha = XLSX.utils.json_to_sheet([
+      {
+        nome: "Maria da Silva",
+        cpf: "00000000000",
+        telefone: "11999999999",
+        funcao: "Recepção",
+        chave_pix: "maria@exemplo.com",
+        tipo_vinculo: "frela",
+        salario_mensal: "",
+      },
+      {
+        nome: "João de Souza",
+        cpf: "11111111111",
+        telefone: "11988888888",
+        funcao: "Produção",
+        chave_pix: "joao@exemplo.com",
+        tipo_vinculo: "clt",
+        salario_mensal: 2500,
+      },
+    ]);
+    const arquivo = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(arquivo, planilha, "Colaboradores");
+    XLSX.writeFile(arquivo, "modelo-colaboradores-paycrew.xlsx");
+  }
+
+  async function importarArquivo(file: File) {
+    setImportando(true);
+    try {
+      if (!empresaId) throw new Error("Organização não encontrada.");
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const primeiraAba = workbook.Sheets[workbook.SheetNames[0] ?? ""];
+      if (!primeiraAba) throw new Error("A planilha não possui uma aba válida.");
+      const linhas = XLSX.utils.sheet_to_json<Record<string, unknown>>(primeiraAba, {
+        defval: "",
+      });
+      if (!linhas.length) throw new Error("A planilha não possui colaboradores.");
+
+      const registros = linhas.map((linha, index) => {
+        const tipo = String(linha.tipo_vinculo || "frela").toLowerCase();
+        const salario = linha.salario_mensal === "" ? null : Number(linha.salario_mensal);
+        const cpf = soDigitos(String(linha.cpf));
+        if (!String(linha.nome).trim() || cpf.length !== 11 || !String(linha.chave_pix).trim()) {
+          throw new Error(`Linha ${index + 2}: nome, CPF e chave Pix são obrigatórios.`);
+        }
+        if (tipo !== "frela" && tipo !== "clt") {
+          throw new Error(`Linha ${index + 2}: tipo_vinculo deve ser frela ou clt.`);
+        }
+        if (tipo === "clt" && (!salario || salario <= 0)) {
+          throw new Error(`Linha ${index + 2}: salário mensal é obrigatório para CLT.`);
+        }
+        return {
+          empresa_id: empresaId,
+          nome: String(linha.nome).trim(),
+          cpf,
+          telefone: String(linha.telefone).trim() || null,
+          funcao: String(linha.funcao).trim() || null,
+          chave_pix: String(linha.chave_pix).trim(),
+          tipo_vinculo: tipo,
+          salario_mensal: salario,
+          ativo: true,
+        };
+      });
+      const { error } = await supabase.from("freelancers").insert(registros);
+      if (error) throw error;
+      toast.success(`${registros.length} colaborador(es) importado(s).`);
+      queryClient.invalidateQueries({ queryKey: ["freelancers"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao importar a planilha.");
+    } finally {
+      setImportando(false);
+    }
+  }
 
   const q = useQuery({
-    queryKey: ["freelancers"],
+    queryKey: ["freelancers", empresaId],
+    enabled: Boolean(empresaId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("freelancers")
@@ -213,19 +291,39 @@ function Freelancers() {
       titulo="Freelancers"
       descricao="Equipe disponível para escala"
       acoes={
-        <Dialog open={novo} onOpenChange={setNovo}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="size-4" /> Novo freelancer
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Novo freelancer</DialogTitle>
-            </DialogHeader>
-            <FormFreelancer onFechar={() => setNovo(false)} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" onClick={baixarModelo}>
+            <Download className="size-4" /> Modelo Excel
+          </Button>
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-muted">
+            <FileSpreadsheet className="size-4" />
+            {importando ? "Importando..." : "Importar Excel"}
+            <input
+              className="sr-only"
+              type="file"
+              accept=".xlsx,.xls"
+              disabled={importando}
+              onChange={(e) => {
+                const arquivo = e.target.files?.[0];
+                if (arquivo) void importarArquivo(arquivo);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
+          <Dialog open={novo} onOpenChange={setNovo}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="size-4" /> Novo colaborador
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Novo colaborador</DialogTitle>
+              </DialogHeader>
+              <FormFreelancer onFechar={() => setNovo(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
       }
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
