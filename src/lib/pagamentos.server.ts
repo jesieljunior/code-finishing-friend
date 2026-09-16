@@ -262,3 +262,28 @@ export async function enviarPix(supabase: any, pagamentoId: string, empresaId?: 
     throw new Error(mensagem);
   }
 }
+
+/** Processa pagamentos agendados vencidos; o cron externo deve chamar esta função. */
+export async function processarPagamentosAgendados(supabase: any, limite = 50) {
+  const agora = new Date().toISOString();
+  const { data: pagamentos, error } = await supabase
+    .from("pagamentos")
+    .select("id")
+    .eq("status", "agendado")
+    .not("data_agendada", "is", null)
+    .lte("data_agendada", agora)
+    .order("data_agendada", { ascending: true })
+    .limit(limite);
+  if (error) throw error;
+
+  const resultados = { processados: 0, falhos: 0 };
+  for (const pagamento of pagamentos ?? []) {
+    try {
+      await enviarPix(supabase, pagamento.id);
+      resultados.processados += 1;
+    } catch {
+      resultados.falhos += 1;
+    }
+  }
+  return resultados;
+}

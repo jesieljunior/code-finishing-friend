@@ -9,6 +9,7 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, ErrorState, LoadingBloco } from "@/components/states";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -69,6 +70,7 @@ function Financeiro() {
   const [forma, setForma] = useState<"pix" | "boleto" | "cartao">("pix");
   const [vencimento, setVencimento] = useState(hojeMais(3));
   const [dataPagamento, setDataPagamento] = useState(hojeMais(1));
+  const [pagamentosSelecionados, setPagamentosSelecionados] = useState<string[]>([]);
   const [descricao, setDescricao] = useState("");
 
   const saldo = useQuery({
@@ -227,6 +229,28 @@ function Financeiro() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const agendarEmMassa = useMutation({
+    mutationFn: async () => {
+      const data = new Date(`${dataPagamento}T09:00:00`);
+      if (!pagamentosSelecionados.length) throw new Error("Selecione ao menos um pagamento.");
+      if (!dataPagamento || Number.isNaN(data.getTime()) || data <= new Date()) {
+        throw new Error("Escolha uma data futura para os pagamentos.");
+      }
+      const { error } = await supabase
+        .from("pagamentos")
+        .update({ status: "agendado", data_agendada: data.toISOString() })
+        .in("id", pagamentosSelecionados)
+        .eq("status", "pendente");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setPagamentosSelecionados([]);
+      toast.success("Pagamentos agendados.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const executar = useMutation({
     mutationFn: (id: string) => chamarPix({ data: { pagamentoId: id } }),
     onSuccess: (r) => {
@@ -307,6 +331,14 @@ function Financeiro() {
             <p className="pb-2 text-xs text-muted-foreground">
               A data será usada ao agendar cada pagamento da fila.
             </p>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={agendarEmMassa.isPending || pagamentosSelecionados.length === 0}
+              onClick={() => agendarEmMassa.mutate()}
+            >
+              <CalendarClock className="size-4" /> Agendar selecionados ({pagamentosSelecionados.length})
+            </Button>
           </div>
           {fila.isPending ? (
             <LoadingBloco />
@@ -330,6 +362,19 @@ function Financeiro() {
                     key={f.id}
                     className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-3"
                   >
+                    {p?.status === "pendente" ? (
+                      <Checkbox
+                        checked={pagamentosSelecionados.includes(p.id)}
+                        onCheckedChange={(checked) =>
+                          setPagamentosSelecionados((atual) =>
+                            checked
+                              ? [...atual, p.id]
+                              : atual.filter((id) => id !== p.id),
+                          )
+                        }
+                        aria-label={`Selecionar pagamento de ${freelancer?.nome ?? "colaborador"}`}
+                      />
+                    ) : null}
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{freelancer?.nome}</p>
                       <p className="truncate text-xs text-muted-foreground">
