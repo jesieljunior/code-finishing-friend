@@ -8,6 +8,18 @@
 
 const arredonda = (n: number) => Math.round(n * 100) / 100;
 
+async function exigirCadastroFiscalValidado(supabase: any, empresaId: string) {
+  const { data: validada, error } = await supabase.rpc("empresa_fiscal_validada", {
+    _empresa_id: empresaId,
+  });
+  if (error) throw new Error("Não foi possível verificar o cadastro fiscal da agência.");
+  if (!validada) {
+    throw new Error(
+      "Pix bloqueado: complete e aguarde a validação do cadastro fiscal da agência.",
+    );
+  }
+}
+
 export type PrecoEfetivo = {
   modelo: "percentual_evento" | "taxa_fixa_pix" | "assinatura_percentual";
   percentual: number;
@@ -187,6 +199,7 @@ export async function enviarPix(supabase: any, pagamentoId: string, empresaId?: 
 
   const valor = Number(pagamento.valor);
   const empresaDestino = empresaResolvida;
+  await exigirCadastroFiscalValidado(supabase, empresaDestino);
   const { data: saldo } = await supabase.rpc("saldo_empresa", { _empresa_id: empresaDestino });
   if (Number(saldo ?? 0) < valor)
     throw new Error(

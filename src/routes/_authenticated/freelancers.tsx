@@ -17,10 +17,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useSessao } from "@/hooks/use-sessao";
 import { supabase } from "@/integrations/supabase/client";
-import { formatarCpf, soDigitos, type Freelancer } from "@/lib/dominio";
+import { formatarCpf, ROTULO_TIPO_VINCULO, soDigitos, type Freelancer, type TipoVinculo } from "@/lib/dominio";
 
 export const Route = createFileRoute("/_authenticated/freelancers")({
   head: () => ({
@@ -55,18 +56,30 @@ function FormFreelancer({
   const [telefone, setTelefone] = useState(freelancer?.telefone ?? "");
   const [funcao, setFuncao] = useState(freelancer?.funcao ?? "");
   const [chavePix, setChavePix] = useState(freelancer?.chave_pix ?? "");
+  const [tipoVinculo, setTipoVinculo] = useState<TipoVinculo>(
+    freelancer?.tipo_vinculo === "clt" ? "clt" : "frela",
+  );
+  const [salarioMensal, setSalarioMensal] = useState(
+    freelancer?.salario_mensal != null ? String(freelancer.salario_mensal) : "",
+  );
   const [ativo, setAtivo] = useState(freelancer?.ativo ?? true);
 
   const salvar = useMutation({
     mutationFn: async () => {
       const digitos = soDigitos(cpf);
       if (digitos.length !== 11) throw new Error("CPF deve ter 11 dígitos.");
+      const salario = salarioMensal ? Number(salarioMensal.replace(",", ".")) : null;
+      if (tipoVinculo === "clt" && (!salario || salario <= 0)) {
+        throw new Error("Informe o salário mensal do colaborador CLT.");
+      }
       const payload = {
         nome: nome.trim(),
         cpf: digitos,
         telefone: telefone.trim() || null,
         funcao: funcao.trim() || null,
         chave_pix: chavePix.trim(),
+        tipo_vinculo: tipoVinculo,
+        salario_mensal: salario,
         ativo,
       };
       const { error } = freelancer
@@ -95,6 +108,23 @@ function FormFreelancer({
       <div className="space-y-1.5">
         <Label htmlFor="f-nome">Nome</Label>
         <Input id="f-nome" required value={nome} onChange={(e) => setNome(e.target.value)} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Tipo de vínculo</Label>
+          <Select value={tipoVinculo} onValueChange={(v) => setTipoVinculo(v as TipoVinculo)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {(Object.keys(ROTULO_TIPO_VINCULO) as TipoVinculo[]).map((tipo) => (
+                <SelectItem key={tipo} value={tipo}>{ROTULO_TIPO_VINCULO[tipo]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="f-salario">Salário mensal (CLT)</Label>
+          <Input id="f-salario" inputMode="decimal" value={salarioMensal} onChange={(e) => setSalarioMensal(e.target.value)} placeholder="0,00" />
+        </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
@@ -232,7 +262,7 @@ function Freelancers() {
                   ) : null}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {[f.funcao, formatarCpf(f.cpf), f.chave_pix]
+                  {[ROTULO_TIPO_VINCULO[f.tipo_vinculo === "clt" ? "clt" : "frela"], f.funcao, formatarCpf(f.cpf), f.chave_pix]
                     .filter(Boolean)
                     .join(" · ")}
                 </p>

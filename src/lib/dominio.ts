@@ -18,6 +18,7 @@ export type StatusPagamento = Enums["status_pagamento"];
 export type TipoPonto = Enums["tipo_ponto"];
 export type TipoValor = Enums["tipo_valor"];
 export type MetodoCheck = Enums["metodo_check"];
+export type TipoVinculo = "frela" | "clt";
 
 export type Empresa = Tabelas["empresas"]["Row"];
 export type Usuario = Tabelas["usuarios"]["Row"];
@@ -87,6 +88,11 @@ export const ROTULO_METODO: Record<MetodoCheck, string> = {
   qrcode: "QR Code",
   selfie: "Selfie",
   manual: "Manual",
+};
+
+export const ROTULO_TIPO_VINCULO: Record<TipoVinculo, string> = {
+  frela: "Frela",
+  clt: "CLT",
 };
 
 /** Próximo estado permitido, ou null se o evento já terminou a sequência. */
