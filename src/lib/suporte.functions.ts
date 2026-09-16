@@ -32,18 +32,45 @@ export const reenviarPixSuporte = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: pagamento } = await supabaseAdmin
       .from("pagamentos")
-      .select("id, fechamentos(escalas(equipes(eventos(empresa_id)))))")
+      .select("id, fechamento_id")
       .eq("id", data.pagamentoId)
       .maybeSingle();
+    const { data: fechamento } = pagamento
+      ? await supabaseAdmin
+          .from("fechamentos")
+          .select("escala_id")
+          .eq("id", pagamento.fechamento_id)
+          .maybeSingle()
+      : { data: null };
+    const { data: escala } = fechamento
+      ? await supabaseAdmin
+          .from("escalas")
+          .select("equipe_id")
+          .eq("id", fechamento.escala_id)
+          .maybeSingle()
+      : { data: null };
+    const { data: equipe } = escala
+      ? await supabaseAdmin
+          .from("equipes")
+          .select("evento_id")
+          .eq("id", escala.equipe_id)
+          .maybeSingle()
+      : { data: null };
+    const { data: evento } = equipe
+      ? await supabaseAdmin
+          .from("eventos")
+          .select("empresa_id")
+          .eq("id", equipe.evento_id)
+          .maybeSingle()
+      : { data: null };
     await supabaseAdmin
       .from("pagamentos")
       .update({ status: "pendente", erro: null })
       .eq("id", data.pagamentoId);
     const { enviarPix } = await import("./pagamentos.server");
     const resultado = await enviarPix(supabaseAdmin, data.pagamentoId);
-    const fechamento = pagamento?.fechamentos as unknown as { escalas?: { equipes?: { eventos?: { empresa_id?: string } } } } | null;
     await supabaseAdmin.from("logs_auditoria").insert({
-      empresa_id: fechamento?.escalas?.equipes?.eventos?.empresa_id ?? null,
+      empresa_id: evento?.empresa_id ?? null,
       ator_id: context.userId,
       ator_contexto: "suporte",
       acao: "pix_reprocessado",
