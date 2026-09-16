@@ -83,11 +83,13 @@ function Financeiro() {
   });
 
   const cobrancas = useQuery({
-    queryKey: ["financeiro", "cobrancas"],
+    queryKey: ["financeiro", "cobrancas", empresaId],
+    enabled: Boolean(empresaId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cobrancas")
         .select("*, clientes(nome), eventos(nome)")
+        .eq("empresa_id", empresaId!)
         .eq("tipo", "cobranca_cliente")
         .order("criado_em", { ascending: false });
       if (error) throw error;
@@ -96,13 +98,19 @@ function Financeiro() {
   });
 
   const auxiliares = useQuery({
-    queryKey: ["financeiro", "auxiliares"],
+    queryKey: ["financeiro", "auxiliares", empresaId],
+    enabled: Boolean(empresaId),
     queryFn: async () => {
       const [c, e] = await Promise.all([
-        supabase.from("clientes").select("id, nome, cpf_cnpj").order("nome"),
+        supabase
+          .from("clientes")
+          .select("id, nome, cpf_cnpj")
+          .eq("empresa_id", empresaId!)
+          .order("nome"),
         supabase
           .from("eventos")
           .select("id, nome")
+          .eq("empresa_id", empresaId!)
           .order("data_inicio", { ascending: false })
           .limit(50),
       ]);
@@ -113,13 +121,15 @@ function Financeiro() {
   });
 
   const fila = useQuery({
-    queryKey: ["financeiro", "fila"],
+    queryKey: ["financeiro", "fila", empresaId],
+    enabled: Boolean(empresaId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("fechamentos")
         .select(
           "id, valor_calculado, status, escala:escalas(valor_combinado, tipo_valor, freelancer:freelancers(nome, chave_pix), equipe:equipes(nome, evento:eventos(nome))), pagamentos(*)",
         )
+        .eq("escalas.equipes.eventos.empresa_id", empresaId!)
         .eq("status", "aprovado")
         .order("criado_em", { ascending: false });
       if (error) throw error;
@@ -128,11 +138,13 @@ function Financeiro() {
   });
 
   const taxas = useQuery({
-    queryKey: ["financeiro", "taxas"],
+    queryKey: ["financeiro", "taxas", empresaId],
+    enabled: Boolean(empresaId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("taxas_plataforma")
         .select("valor")
+        .eq("empresa_id", empresaId!)
         .eq("status", "cobrada");
       if (error) throw error;
       return data.reduce((s, t) => s + Number(t.valor), 0);

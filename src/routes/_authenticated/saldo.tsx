@@ -70,11 +70,13 @@ function Saldo() {
   });
 
   const recargas = useQuery({
-    queryKey: ["saldo", "recargas"],
+    queryKey: ["saldo", "recargas", empresaId],
+    enabled: Boolean(empresaId),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cobrancas")
         .select("*")
+        .eq("empresa_id", empresaId!)
         .eq("tipo", "aporte_agencia")
         .order("criado_em", { ascending: false });
       if (error) throw error;

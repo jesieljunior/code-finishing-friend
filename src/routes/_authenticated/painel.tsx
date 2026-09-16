@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { dataHora, moeda } from "@/lib/dominio";
+import { useSessao } from "@/hooks/use-sessao";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
@@ -28,20 +29,35 @@ export const Route = createFileRoute("/_authenticated/painel")({
   component: Painel,
 });
 
-async function carregar() {
+async function carregar(empresaId: string) {
   const [eventos, pontos, fechamentos, pagamentos] = await Promise.all([
     supabase
       .from("eventos")
       .select("id, nome, local, data_inicio, status")
+      .eq("empresa_id", empresaId)
       .not("status", "in", "(concluido,arquivado,cancelado)")
       .order("data_inicio", { ascending: true })
       .limit(8),
-    supabase.from("pontos").select("id", { count: "exact", head: true }).eq("status", "pendente"),
+    supabase
+      .from("pontos")
+      .select("id, escalas!inner(equipes!inner(eventos!inner(empresa_id)))", {
+        count: "exact",
+        head: true,
+      })
+      .eq("status", "pendente")
+      .eq("escalas.equipes.eventos.empresa_id", empresaId),
     supabase
       .from("fechamentos")
-      .select("id", { count: "exact", head: true })
+      .select("id, escalas!inner(equipes!inner(eventos!inner(empresa_id)))", {
+        count: "exact",
+        head: true,
+      })
+      .eq("escalas.equipes.eventos.empresa_id", empresaId)
       .eq("status", "pendente_aprovacao"),
-    supabase.from("pagamentos").select("valor, status"),
+    supabase
+      .from("pagamentos")
+      .select("valor, status, fechamentos!inner(escalas!inner(equipes!inner(eventos!inner(empresa_id))))")
+      .eq("fechamentos.escalas.equipes.eventos.empresa_id", empresaId),
   ]);
 
   if (eventos.error) throw eventos.error;
@@ -86,7 +102,12 @@ function Cartao({
 }
 
 function Painel() {
-  const q = useQuery({ queryKey: ["painel"], queryFn: carregar });
+  const { empresaId } = useSessao();
+  const q = useQuery({
+    queryKey: ["painel", empresaId],
+    enabled: Boolean(empresaId),
+    queryFn: () => carregar(empresaId!),
+  });
 
   return (
     <AppShell titulo="Painel" descricao="O que precisa de atenção agora">
