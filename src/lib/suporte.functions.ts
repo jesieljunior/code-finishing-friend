@@ -30,12 +30,29 @@ export const reenviarPixSuporte = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await autorizar(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: pagamento } = await supabaseAdmin
+      .from("pagamentos")
+      .select("id, fechamentos(escalas(equipes(eventos(empresa_id)))))")
+      .eq("id", data.pagamentoId)
+      .maybeSingle();
     await supabaseAdmin
       .from("pagamentos")
       .update({ status: "pendente", erro: null })
       .eq("id", data.pagamentoId);
     const { enviarPix } = await import("./pagamentos.server");
-    return enviarPix(supabaseAdmin, data.pagamentoId);
+    const resultado = await enviarPix(supabaseAdmin, data.pagamentoId);
+    const fechamento = pagamento?.fechamentos as unknown as { escalas?: { equipes?: { eventos?: { empresa_id?: string } } } } | null;
+    await supabaseAdmin.from("logs_auditoria").insert({
+      empresa_id: fechamento?.escalas?.equipes?.eventos?.empresa_id ?? null,
+      ator_id: context.userId,
+      ator_contexto: "suporte",
+      acao: "pix_reprocessado",
+      recurso_tipo: "pagamento",
+      recurso_id: data.pagamentoId,
+      resultado: "sucesso",
+      detalhes: {},
+    });
+    return resultado;
   });
 
 /** Confere no Asaas se a cobrança de qualquer agência já foi paga. */
@@ -82,6 +99,27 @@ export const conferirCobrancaSuporte = createServerFn({ method: "POST" })
       valor: valorCredito,
       descricao: `Cobrança paga — ${cobranca.descricao}`,
       cobranca_id: cobranca.id,
+    });
+
+    await supabaseAdmin
+      .from("fundings")
+      .update({
+        status: "available",
+        valor_disponivel: valorCredito,
+        referencia_parceiro: cobranca.parceiro_cobranca_id,
+      })
+      .eq("cobranca_id", cobranca.id)
+      .eq("status", "pending");
+
+    await supabaseAdmin.from("logs_auditoria").insert({
+      empresa_id: cobranca.empresa_id,
+      ator_id: context.userId,
+      ator_contexto: "suporte",
+      acao: "cobranca_conferida",
+      recurso_tipo: "cobranca",
+      recurso_id: cobranca.id,
+      resultado: "sucesso",
+      detalhes: { status: "pago" },
     });
 
     if (taxaPendente)

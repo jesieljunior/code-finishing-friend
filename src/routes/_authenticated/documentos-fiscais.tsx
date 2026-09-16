@@ -57,7 +57,7 @@ function DocumentosFiscais() {
     if (error) { await supabase.storage.from("documentos-fiscais").remove([caminho]); throw error; }
   }, onSuccess: () => { setNumero(""); setEmissor(""); setValor(""); setCompetencia(""); setObservacoes(""); setArquivo(null); qc.invalidateQueries({ queryKey: ["documentos-fiscais"] }); toast.success("Documento arquivado."); }, onError: (e: Error) => toast.error(e.message) });
 
-  async function baixar(caminho: string | null) { if (!caminho) return; const { data, error } = await supabase.storage.from("documentos-fiscais").createSignedUrl(caminho, 60); if (error) return toast.error(error.message); window.open(data.signedUrl, "_blank", "noopener,noreferrer"); }
+  async function baixar(caminho: string | null): Promise<void> { if (!caminho) return; const { data, error } = await supabase.storage.from("documentos-fiscais").createSignedUrl(caminho, 60); if (error) { toast.error(error.message); return; } window.open(data.signedUrl, "_blank", "noopener,noreferrer"); }
   const permitido = pode("financeiro.gerenciar") || pode("cadastros.gerenciar");
   if (!permitido) return <AppShell titulo="Documentos fiscais"><EmptyState titulo="Área restrita" descricao="Seu perfil não tem acesso aos documentos fiscais." /></AppShell>;
 
