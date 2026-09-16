@@ -173,6 +173,30 @@ export function calcularFechamento(
   return { horas, valor };
 }
 
+export function calcularFolhaClt({
+  salarioBase,
+  diasBase = 30,
+  faltasNaoJustificadas,
+  descontoAbonado = false,
+}: {
+  salarioBase: number;
+  diasBase?: number;
+  faltasNaoJustificadas: number;
+  descontoAbonado?: boolean;
+}): { descontoCalculado: number; valorFinal: number } {
+  if (salarioBase <= 0 || diasBase <= 0 || faltasNaoJustificadas < 0) {
+    throw new Error("Valores inválidos para calcular a folha CLT.");
+  }
+  const descontoCalculado = arredonda(
+    (salarioBase / diasBase) * Math.min(faltasNaoJustificadas, diasBase),
+  );
+  const descontoAplicado = descontoAbonado ? 0 : descontoCalculado;
+  return {
+    descontoCalculado,
+    valorFinal: arredonda(Math.max(salarioBase - descontoAplicado, 0)),
+  };
+}
+
 export const moeda = (v: number | string) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(v));
 
