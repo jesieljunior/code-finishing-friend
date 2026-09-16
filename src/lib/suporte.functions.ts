@@ -8,13 +8,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requirePlatformContext } from "@/lib/autorizacao.server";
+import { resolverEmpresaDoPagamento } from "@/lib/pagamentos.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function autorizar(supabase: any, userId: string) {
-  const { data } = await supabase
-    .from("plataforma_usuarios")
-    .select("papel")
-    .eq("user_id", userId);
+  const { data } = await supabase.from("plataforma_usuarios").select("papel").eq("user_id", userId);
   const papeis = ((data ?? []) as { papel: string }[]).map((r) => r.papel);
   if (!papeis.includes("suporte") && !papeis.includes("admin_master"))
     throw new Error("Acesso restrito à equipe PayCrew.");
@@ -24,53 +23,41 @@ async function autorizar(supabase: any, userId: string) {
 /** Recoloca o pagamento na fila e tenta o Pix de novo. */
 export const reenviarPixSuporte = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ pagamentoId: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ pagamentoId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    requirePlatformContext(context);
     await autorizar(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: pagamento } = await supabaseAdmin
+    const empresaId = await resolverEmpresaDoPagamento(context.supabase, data.pagamentoId);
+    const { data: pagamento } = await context.supabase
       .from("pagamentos")
-      .select("id, fechamento_id")
+      .select("id, fechamento_id, status")
       .eq("id", data.pagamentoId)
       .maybeSingle();
-    const { data: fechamento } = pagamento
-      ? await supabaseAdmin
-          .from("fechamentos")
-          .select("escala_id")
-          .eq("id", pagamento.fechamento_id)
-          .maybeSingle()
-      : { data: null };
-    const { data: escala } = fechamento
-      ? await supabaseAdmin
-          .from("escalas")
-          .select("equipe_id")
-          .eq("id", fechamento.escala_id)
-          .maybeSingle()
-      : { data: null };
-    const { data: equipe } = escala
-      ? await supabaseAdmin
+    if (!pagamento) throw new Error("Pagamento não encontrado.");
+    const { data: evento } = await context.supabase
+      .from("eventos")
+      .select("id, empresa_id")
+      .eq("id", (
+        await context.supabase
           .from("equipes")
           .select("evento_id")
-          .eq("id", escala.equipe_id)
-          .maybeSingle()
-      : { data: null };
-    const { data: evento } = equipe
-      ? await supabaseAdmin
-          .from("eventos")
-          .select("empresa_id")
-          .eq("id", equipe.evento_id)
-          .maybeSingle()
-      : { data: null };
+          .eq("id", (
+            await context.supabase.from("escalas").select("equipe_id").eq("id", (
+              await context.supabase.from("fechamentos").select("escala_id").eq("id", pagamento.fechamento_id).maybeSingle()
+            )?.data?.escala_id ?? ""
+          ).maybeSingle())?.data?.equipe_id ?? ""
+      ).maybeSingle())?.data?.evento_id ?? ""
+      )
+      .maybeSingle();
     await supabaseAdmin
       .from("pagamentos")
       .update({ status: "pendente", erro: null })
       .eq("id", data.pagamentoId);
     const { enviarPix } = await import("./pagamentos.server");
-    const resultado = await enviarPix(supabaseAdmin, data.pagamentoId);
+    const resultado = await enviarPix(supabaseAdmin, data.pagamentoId, empresaId);
     await supabaseAdmin.from("logs_auditoria").insert({
-      empresa_id: evento?.empresa_id ?? null,
+      empresa_id: evento?.empresa_id ?? empresaId,
       ator_id: context.userId,
       ator_contexto: "suporte",
       acao: "pix_reprocessado",
@@ -87,16 +74,18 @@ export const conferirCobrancaSuporte = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    requirePlatformContext(context);
     await autorizar(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: cobranca } = await supabaseAdmin
+    const { data: cobranca } = await context.supabase
       .from("cobrancas")
       .select("id, empresa_id, valor, status, parceiro_cobranca_id, descricao")
       .eq("id", data.id)
       .maybeSingle();
     if (!cobranca) throw new Error("Cobrança não encontrada.");
     if (cobranca.status === "pago") return { status: "pago" as const };
+    if (!cobranca.empresa_id) throw new Error("Cobrança sem agência vinculada.");
     if (!cobranca.parceiro_cobranca_id) throw new Error("Cobrança sem registro no parceiro.");
 
     const { obterCobrancaAsaas } = await import("./asaas.server");

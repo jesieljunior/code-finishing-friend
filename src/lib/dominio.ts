@@ -41,7 +41,6 @@ export const ROTULO_PAPEL_PLATAFORMA: Record<PapelPlataforma, string> = {
   suporte: "Suporte PayCrew",
 };
 
-
 /** Sequência oficial do PAS cap. 07. CANCELADO fica fora, é exceção. */
 export const ORDEM_STATUS_EVENTO: StatusEvento[] = [
   "planejamento",
@@ -106,10 +105,7 @@ export function podeCancelar(atual: StatusEvento): boolean {
  * Espelha estado_evento_service.transicionar: só avança um passo por vez,
  * nunca volta, e cancelar só antes de concluir.
  */
-export function validarTransicao(
-  atual: StatusEvento,
-  novo: StatusEvento,
-): string | null {
+export function validarTransicao(atual: StatusEvento, novo: StatusEvento): string | null {
   if (novo === "cancelado") {
     return podeCancelar(atual)
       ? null
@@ -151,14 +147,11 @@ export function calcularFechamento(
   pontosDaEscala: Ponto[],
 ): { horas: number; valor: number } {
   const pontos = [...pontosDaEscala].sort(
-    (a, b) =>
-      new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime(),
+    (a, b) => new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime(),
   );
 
   const entrada = pontos.find((p) => p.tipo === "entrada" && p.status === "aprovado");
-  const saida = [...pontos]
-    .reverse()
-    .find((p) => p.tipo === "saida" && p.status === "aprovado");
+  const saida = [...pontos].reverse().find((p) => p.tipo === "saida" && p.status === "aprovado");
 
   if (!entrada || !saida) return { horas: 0, valor: 0 };
   const ini = new Date(entrada.registrado_em).getTime();
@@ -175,9 +168,7 @@ export function calcularFechamento(
 }
 
 export const moeda = (v: number | string) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-    Number(v),
-  );
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(v));
 
 export const dataHora = (v: string | null) =>
   v
@@ -191,12 +182,57 @@ export const dataHora = (v: string | null) =>
     : "—";
 
 export const dataCurta = (v: string | null) =>
-  v
-    ? new Date(v).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
-    : "—";
+  v ? new Date(v).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "—";
 
 export const hora = (v: string | null) =>
   v ? new Date(v).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "—";
+
+export type ContextoTipo = "platform" | "organization";
+
+export interface ContextoResolvido {
+  usuarioId: string;
+  empresaId: string | null;
+  papeis: PapelUsuario[];
+  papeisPlataforma: PapelPlataforma[];
+  hasOrganizationContext: boolean;
+  hasPlatformContext: boolean;
+  hasAnyContext: boolean;
+  organizationContext: { empresaId: string } | null;
+  platformContext: { papeis: PapelPlataforma[] } | null;
+}
+
+export function resolverContextoLegacy({
+  usuarioId,
+  empresaId,
+  papeis = [],
+  papeisPlataforma = [],
+}: {
+  usuarioId: string;
+  empresaId: string | null;
+  papeis?: PapelUsuario[];
+  papeisPlataforma?: string[];
+}): ContextoResolvido {
+  const papeisPlataformaValidados = papeisPlataforma.filter(
+    (papel): papel is PapelPlataforma => papel === "admin_master" || papel === "suporte",
+  );
+
+  const organizationContext = empresaId ? { empresaId } : null;
+  const platformContext = papeisPlataformaValidados.length
+    ? { papeis: papeisPlataformaValidados }
+    : null;
+
+  return {
+    usuarioId,
+    empresaId,
+    papeis,
+    papeisPlataforma: papeisPlataformaValidados,
+    hasOrganizationContext: Boolean(organizationContext),
+    hasPlatformContext: Boolean(platformContext),
+    hasAnyContext: Boolean(organizationContext || platformContext),
+    organizationContext,
+    platformContext,
+  };
+}
 
 /** Permissões de UI. A autorização real vive nas políticas do banco. */
 export type Capacidade =
@@ -310,8 +346,7 @@ export const DESCRICAO_MODELO_COBRANCA: Record<ModeloCobranca, string> = {
   percentual_evento:
     "Cobramos uma única vez por evento, sobre o total dos fechamentos aprovados. Recomendado.",
   taxa_fixa_pix: "Um valor fixo é cobrado a cada Pix enviado a um freelancer.",
-  assinatura_percentual:
-    "Mensalidade fixa da agência somada a um percentual menor por evento.",
+  assinatura_percentual: "Mensalidade fixa da agência somada a um percentual menor por evento.",
 };
 
 export const ROTULO_STATUS_COBRANCA: Record<string, string> = {
@@ -333,15 +368,13 @@ export const ROTULO_STATUS: Record<string, string> = {
   recusado: "Recusado",
 };
 
-
 export const soDigitos = (v: string) => v.replace(/\D+/g, "");
 
 /** PostgREST pode tipar relação aninhada como objeto ou lista; normaliza. */
-export const lista = <T,>(v: T | T[] | null | undefined): T[] =>
+export const lista = <T>(v: T | T[] | null | undefined): T[] =>
   Array.isArray(v) ? v : v ? [v] : [];
 
-export const um = <T,>(v: T | T[] | null | undefined): T | null =>
-  lista(v)[0] ?? null;
+export const um = <T>(v: T | T[] | null | undefined): T | null => lista(v)[0] ?? null;
 
 export const formatarCpf = (v: string) => {
   const d = soDigitos(v).slice(0, 11);

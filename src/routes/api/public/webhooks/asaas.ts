@@ -8,11 +8,9 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 
-type EventoAsaas = {
-  event?: string;
-  payment?: { id?: string; externalReference?: string; value?: number };
-  transfer?: { id?: string; externalReference?: string; failReason?: string };
-};
+import { gerarChaveWebhookAsaas, type EventoAsaasWebhook } from "@/lib/webhook-idempotencia";
+
+type EventoAsaas = EventoAsaasWebhook;
 
 const PAGAS = new Set([
   "PAYMENT_RECEIVED",
@@ -39,6 +37,17 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const evento = corpo.event ?? "";
+        const chaveIdempotencia = gerarChaveWebhookAsaas(corpo);
+
+        const { data: webhookJaProcessado } = await (supabaseAdmin as any)
+          .from("webhook_eventos")
+          .select("id")
+          .eq("chave_idempotencia", chaveIdempotencia)
+          .maybeSingle();
+
+        if (webhookJaProcessado) {
+          return new Response("ok");
+        }
 
         if (PAGAS.has(evento) && corpo.payment?.id) {
           const { data: cobranca } = await supabaseAdmin
@@ -133,6 +142,19 @@ export const Route = createFileRoute("/api/public/webhooks/asaas")({
               });
             }
           }
+        }
+
+        const { error: erroWebhookLog } = await (supabaseAdmin as any)
+          .from("webhook_eventos")
+          .insert({
+            chave_idempotencia: chaveIdempotencia,
+            evento: evento,
+            payload: corpo,
+            status: "processado",
+          });
+
+        if (erroWebhookLog && erroWebhookLog.code !== "23505") {
+          throw erroWebhookLog;
         }
 
         return new Response("ok");

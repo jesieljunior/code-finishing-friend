@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   podeCom,
+  resolverContextoLegacy,
   type Capacidade,
+  type ContextoResolvido,
   type Empresa,
   type PapelUsuario,
   type Usuario,
@@ -14,8 +16,8 @@ export interface Sessao {
   empresa: Empresa | null;
   papeis: PapelUsuario[];
   papeisPlataforma: string[];
+  contexto: ContextoResolvido;
 }
-
 
 async function carregarSessao(): Promise<Sessao | null> {
   const { data: auth } = await supabase.auth.getUser();
@@ -30,10 +32,7 @@ async function carregarSessao(): Promise<Sessao | null> {
   if (error) throw error;
   if (!usuario) return null;
 
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id);
+  const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
 
   const { data: papeisPlataforma } = await supabase
     .from("plataforma_usuarios")
@@ -50,11 +49,19 @@ async function carregarSessao(): Promise<Sessao | null> {
     empresa = data ?? null;
   }
 
+  const contexto = resolverContextoLegacy({
+    usuarioId: user.id,
+    empresaId: usuario.empresa_id ?? null,
+    papeis: (roles ?? []).map((r) => r.role as PapelUsuario),
+    papeisPlataforma: (papeisPlataforma ?? []).map((r) => r.papel as string),
+  });
+
   return {
     usuario,
     empresa,
-    papeis: (roles ?? []).map((r) => r.role),
+    papeis: (roles ?? []).map((r) => r.role as PapelUsuario),
     papeisPlataforma: (papeisPlataforma ?? []).map((r) => r.papel as string),
+    contexto,
   };
 }
 
@@ -67,10 +74,19 @@ export function useSessao() {
 
   const sessao = query.data ?? null;
   const papeisPlataforma = sessao?.papeisPlataforma ?? [];
+  const contexto =
+    sessao?.contexto ??
+    resolverContextoLegacy({
+      usuarioId: sessao?.usuario.id ?? "",
+      empresaId: sessao?.usuario.empresa_id ?? null,
+      papeis: sessao?.papeis ?? [],
+      papeisPlataforma: sessao?.papeisPlataforma ?? [],
+    });
 
   return {
     ...query,
     sessao,
+    contexto,
     empresaId: sessao?.usuario.empresa_id ?? null,
     papeis: sessao?.papeis ?? [],
     papeisPlataforma,
@@ -80,4 +96,3 @@ export function useSessao() {
     pode: (c: Capacidade) => podeCom(sessao?.papeis ?? [], c),
   };
 }
-

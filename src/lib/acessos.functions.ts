@@ -2,6 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  requireCapability,
+  requireOrganizationContext,
+  requirePlatformContext,
+} from "@/lib/autorizacao.server";
 
 const papelSchema = z.enum(["admin", "coordenador", "financeiro", "supervisor"]);
 
@@ -55,15 +60,17 @@ async function criarUsuario(
 export const criarAcessoEquipe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({
-      nome: z.string().trim().min(2).max(120),
-      email: z.string().trim().email().toLowerCase(),
-      papel: papelSchema,
-    }).parse(input),
+    z
+      .object({
+        nome: z.string().trim().min(2).max(120),
+        email: z.string().trim().email().toLowerCase(),
+        papel: papelSchema,
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { exigirCapacidade } = await import("./autorizacao.server");
-    await exigirCapacidade(context.supabase, context.userId, "configuracoes.gerenciar");
+    requireOrganizationContext(context);
+    await requireCapability(context.supabase, context.userId, "configuracoes.gerenciar");
     const { data: ator } = await context.supabase
       .from("usuarios")
       .select("empresa_id")
@@ -90,6 +97,7 @@ export const criarAcessosTeste = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ empresaId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    requirePlatformContext(context);
     const { data: papel } = await context.supabase
       .from("plataforma_usuarios")
       .select("papel")
@@ -100,9 +108,35 @@ export const criarAcessosTeste = createServerFn({ method: "POST" })
 
     const sufixo = `${Date.now()}-${crypto.randomUUID().slice(0, 6)}`;
     const acessos = [];
-    acessos.push(await criarUsuario(`agencia.${sufixo}@example.com`, "Teste Agência", senhaTemporaria(), data.empresaId, "admin"));
-    acessos.push(await criarUsuario(`suporte.${sufixo}@example.com`, "Teste Suporte", senhaTemporaria(), null, undefined, "suporte"));
-    acessos.push(await criarUsuario(`master.${sufixo}@example.com`, "Teste Admin Master", senhaTemporaria(), null, undefined, "admin_master"));
+    acessos.push(
+      await criarUsuario(
+        `agencia.${sufixo}@example.com`,
+        "Teste Agência",
+        senhaTemporaria(),
+        data.empresaId,
+        "admin",
+      ),
+    );
+    acessos.push(
+      await criarUsuario(
+        `suporte.${sufixo}@example.com`,
+        "Teste Suporte",
+        senhaTemporaria(),
+        null,
+        undefined,
+        "suporte",
+      ),
+    );
+    acessos.push(
+      await criarUsuario(
+        `master.${sufixo}@example.com`,
+        "Teste Admin Master",
+        senhaTemporaria(),
+        null,
+        undefined,
+        "admin_master",
+      ),
+    );
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("logs_auditoria").insert({

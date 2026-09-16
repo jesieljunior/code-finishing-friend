@@ -115,7 +115,6 @@ const NAV_PLATAFORMA: (ItemNav & { somenteMaster?: boolean })[] = [
   { to: "/acessos-teste", label: "Acessos de teste", icone: FlaskConical, somenteMaster: true },
 ];
 
-
 export function AppShell({
   titulo,
   descricao,
@@ -127,19 +126,18 @@ export function AppShell({
   acoes?: ReactNode;
   children: ReactNode;
 }) {
-  const { sessao, pode, ehAdminMaster, ehEquipePlataforma } = useSessao();
+  const { sessao, pode, ehAdminMaster, ehEquipePlataforma, contexto } = useSessao();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const temContextoPlataforma = contexto.hasPlatformContext || ehEquipePlataforma;
+
   const itens = [
     ...NAV.filter((i) => !i.capacidade || pode(i.capacidade)),
-    ...NAV_PLATAFORMA.filter((i) =>
-      i.somenteMaster ? ehAdminMaster : ehEquipePlataforma,
-    ),
+    ...NAV_PLATAFORMA.filter((i) => (i.somenteMaster ? ehAdminMaster : temContextoPlataforma)),
   ];
   const itensMobile = itens.filter((i) => i.mobile).slice(0, 5);
-
 
   async function sair() {
     await queryClient.cancelQueries();
@@ -179,9 +177,7 @@ export function AppShell({
           })}
         </nav>
         <div className="space-y-2 border-t border-sidebar-border px-4 py-3 text-xs text-sidebar-foreground/70">
-          <p className="truncate font-medium text-sidebar-foreground">
-            {sessao?.usuario.nome}
-          </p>
+          <p className="truncate font-medium text-sidebar-foreground">{sessao?.usuario.nome}</p>
           <p className="truncate">
             {sessao?.papeis.map((p) => ROTULO_PAPEL[p]).join(" · ") || "Sem papel"}
           </p>

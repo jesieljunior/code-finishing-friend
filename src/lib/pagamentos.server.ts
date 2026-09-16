@@ -115,8 +115,48 @@ export async function garantirTaxa(
   return data ?? null;
 }
 
+/** Resolve a empresa do pagamento seguindo a cadeia de dependência do pagamento. */
+export async function resolverEmpresaDoPagamento(supabase: any, pagamentoId: string): Promise<string> {
+  const { data: pagamento } = await supabase
+    .from("pagamentos")
+    .select("id, fechamento_id")
+    .eq("id", pagamentoId)
+    .maybeSingle();
+  if (!pagamento) throw new Error("Pagamento não encontrado.");
+
+  const { data: fechamento } = await supabase
+    .from("fechamentos")
+    .select("id, escala_id")
+    .eq("id", pagamento.fechamento_id)
+    .maybeSingle();
+  if (!fechamento) throw new Error("Fechamento do pagamento não encontrado.");
+
+  const { data: escala } = await supabase
+    .from("escalas")
+    .select("id, equipe_id")
+    .eq("id", fechamento.escala_id)
+    .maybeSingle();
+  if (!escala) throw new Error("Escala do pagamento não encontrada.");
+
+  const { data: equipe } = await supabase
+    .from("equipes")
+    .select("id, evento_id")
+    .eq("id", escala.equipe_id)
+    .maybeSingle();
+  if (!equipe) throw new Error("Equipe do pagamento não encontrada.");
+
+  const { data: evento } = await supabase
+    .from("eventos")
+    .select("id, empresa_id")
+    .eq("id", equipe.evento_id)
+    .maybeSingle();
+  if (!evento?.empresa_id) throw new Error("Não foi possível identificar a agência do pagamento.");
+
+  return evento.empresa_id as string;
+}
+
 /** Valida saldo, envia o Pix, debita o saldo e cobra a taxa da plataforma. */
-export async function enviarPix(supabase: any, pagamentoId: string) {
+export async function enviarPix(supabase: any, pagamentoId: string, empresaId?: string | null) {
   const { data: pagamento } = await supabase
     .from("pagamentos")
     .select(
@@ -137,12 +177,17 @@ export async function enviarPix(supabase: any, pagamentoId: string) {
   const evento: any = primeiro(equipe?.eventos);
 
   const chavePix: string | undefined = freelancer?.chave_pix;
-  const empresaId: string | undefined = evento?.empresa_id;
+  const empresaResolvida = empresaId ?? evento?.empresa_id ?? null;
   if (!chavePix) throw new Error("Freelancer sem chave Pix cadastrada.");
-  if (!empresaId) throw new Error("Não foi possível identificar a agência do pagamento.");
+  if (!empresaResolvida) throw new Error("Não foi possível identificar a agência do pagamento.");
+
+  if (evento?.empresa_id && empresaResolvida !== evento.empresa_id) {
+    throw new Error("Pagamento vinculado a outra agência.");
+  }
 
   const valor = Number(pagamento.valor);
-  const { data: saldo } = await supabase.rpc("saldo_empresa", { _empresa_id: empresaId });
+  const empresaDestino = empresaResolvida;
+  const { data: saldo } = await supabase.rpc("saldo_empresa", { _empresa_id: empresaDestino });
   if (Number(saldo ?? 0) < valor)
     throw new Error(
       `Saldo insuficiente: disponível R$ ${Number(saldo ?? 0).toFixed(2)}, necessário R$ ${valor.toFixed(2)}. Adicione saldo para continuar.`,
@@ -170,7 +215,7 @@ export async function enviarPix(supabase: any, pagamentoId: string) {
       .eq("id", pagamento.id);
 
     await supabase.from("movimentos_saldo").insert({
-      empresa_id: empresaId,
+      empresa_id: empresaDestino,
       tipo: "debito",
       valor,
       descricao: `Pix para ${freelancer?.nome ?? "freelancer"}`,
@@ -178,7 +223,7 @@ export async function enviarPix(supabase: any, pagamentoId: string) {
     });
 
     const taxa = await garantirTaxa(supabase, {
-      empresaId,
+      empresaId: empresaDestino,
       eventoId: equipe?.evento_id ?? null,
       pagamentoId: pagamento.id,
       valorPix: valor,
@@ -186,7 +231,7 @@ export async function enviarPix(supabase: any, pagamentoId: string) {
 
     if (taxa) {
       await supabase.from("movimentos_saldo").insert({
-        empresa_id: empresaId,
+        empresa_id: empresaDestino,
         tipo: "debito",
         valor: taxa.valor,
         descricao: "Taxa PayCrew",

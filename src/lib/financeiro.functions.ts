@@ -8,6 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireOrganizationContext } from "@/lib/autorizacao.server";
 
 const arredonda = (n: number) => Math.round(n * 100) / 100;
 
@@ -26,6 +27,7 @@ export const criarCobranca = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => cobrancaSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    requireOrganizationContext(context);
 
     const { exigirCapacidade } = await import("./autorizacao.server");
     await exigirCapacidade(supabase, userId, "financeiro.gerenciar");
@@ -40,12 +42,22 @@ export const criarCobranca = createServerFn({ method: "POST" })
 
     const { data: cliente } = await supabase
       .from("clientes")
-      .select("id, nome, cpf_cnpj, email, telefone")
+      .select("id, nome, cpf_cnpj, email, telefone, empresa_id")
       .eq("id", data.clienteId)
       .maybeSingle();
     if (!cliente) throw new Error("Cliente não encontrado.");
-    if (!cliente.cpf_cnpj)
-      throw new Error("Cadastre o CPF/CNPJ do cliente antes de cobrar.");
+    if (cliente.empresa_id !== empresaId) throw new Error("Cliente não pertence à sua agência.");
+    if (!cliente.cpf_cnpj) throw new Error("Cadastre o CPF/CNPJ do cliente antes de cobrar.");
+
+    if (data.eventoId) {
+      const { data: evento } = await supabase
+        .from("eventos")
+        .select("id, empresa_id")
+        .eq("id", data.eventoId)
+        .maybeSingle();
+      if (!evento) throw new Error("Evento não encontrado.");
+      if (evento.empresa_id !== empresaId) throw new Error("Evento não pertence à sua agência.");
+    }
 
     const documentoLimpo = cliente.cpf_cnpj.replace(/\D+/g, "");
     if (documentoLimpo.length !== 11 && documentoLimpo.length !== 14)
@@ -72,9 +84,8 @@ export const criarCobranca = createServerFn({ method: "POST" })
     if (erroInsert || !registro) throw new Error(erroInsert?.message ?? "Falha ao registrar.");
 
     try {
-      const { garantirClienteAsaas, criarCobrancaAsaas, obterPixCopiaCola } = await import(
-        "./asaas.server"
-      );
+      const { garantirClienteAsaas, criarCobrancaAsaas, obterPixCopiaCola } =
+        await import("./asaas.server");
       const clienteAsaasId = await garantirClienteAsaas({
         nome: cliente.nome,
         cpfCnpj: documentoLimpo,
@@ -92,8 +103,7 @@ export const criarCobranca = createServerFn({ method: "POST" })
       const usaPercentual =
         preco &&
         !preco.em_trial &&
-        (preco.modelo === "percentual_evento" ||
-          preco.modelo === "assinatura_percentual") &&
+        (preco.modelo === "percentual_evento" || preco.modelo === "assinatura_percentual") &&
         preco.percentual > 0;
 
       const split =
@@ -118,10 +128,7 @@ export const criarCobranca = createServerFn({ method: "POST" })
             empresa_id: empresaId,
             evento_id: data.eventoId ?? null,
             cobranca_id: registro.id,
-            modelo: preco.modelo as
-              | "percentual_evento"
-              | "taxa_fixa_pix"
-              | "assinatura_percentual",
+            modelo: preco.modelo as "percentual_evento" | "taxa_fixa_pix" | "assinatura_percentual",
             base_calculo: data.valor,
             valor: valorTaxa,
             status: "pendente",
@@ -155,14 +162,19 @@ export const sincronizarCobranca = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    requireOrganizationContext(context);
     const { exigirCapacidade } = await import("./autorizacao.server");
     await exigirCapacidade(supabase, userId, "financeiro.gerenciar");
+    const contextoEmpresa = requireOrganizationContext(context);
     const { data: cobranca } = await supabase
       .from("cobrancas")
       .select("id, empresa_id, valor, status, parceiro_cobranca_id, descricao")
       .eq("id", data.id)
       .maybeSingle();
     if (!cobranca) throw new Error("Cobrança não encontrada.");
+    if (cobranca.empresa_id !== contextoEmpresa.empresaId) {
+      throw new Error("Cobrança não pertence à sua agência.");
+    }
     if (cobranca.status === "pago") return { status: "pago" as const };
     if (!cobranca.parceiro_cobranca_id) throw new Error("Cobrança sem registro no parceiro.");
 
@@ -218,12 +230,15 @@ export const sincronizarCobranca = createServerFn({ method: "POST" })
 /** Envia o Pix ao freelancer contra o saldo da agência. */
 export const executarPagamentoPix = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ pagamentoId: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ pagamentoId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    const contextoEmpresa = requireOrganizationContext(context);
     const { exigirCapacidade } = await import("./autorizacao.server");
     await exigirCapacidade(context.supabase, context.userId, "financeiro.gerenciar");
-    const { enviarPix } = await import("./pagamentos.server");
-    return enviarPix(context.supabase, data.pagamentoId);
+    const { resolverEmpresaDoPagamento, enviarPix } = await import("./pagamentos.server");
+    const empresaId = await resolverEmpresaDoPagamento(context.supabase, data.pagamentoId);
+    if (empresaId !== contextoEmpresa.empresaId) {
+      throw new Error("Pagamento não pertence à sua agência.");
+    }
+    return enviarPix(context.supabase, data.pagamentoId, empresaId);
   });
