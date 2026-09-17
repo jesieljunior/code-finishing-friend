@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Review and reconcile the user's manual changes before continuing test-access work
 - [x] Enforce role authorization on existing actions
 - [x] Complete client registration and event relationship
 - [x] Add team access management and safe test-account provisioning
