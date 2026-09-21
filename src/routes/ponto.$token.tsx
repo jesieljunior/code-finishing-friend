@@ -85,6 +85,7 @@ function PaginaPonto() {
 
   const registrar = useMutation({
     mutationFn: async (tipo: TipoPonto) => {
+      if (!identificado) throw new Error("Identifique-se novamente para registrar o ponto.");
       let fotoBase64: string | null = null;
       if (contexto.data?.exigeSelfie) {
         fotoBase64 = await tirarSelfie();
@@ -104,7 +105,7 @@ function PaginaPonto() {
         data: {
           token,
           cpf: soDigitos(cpf),
-          escalaId: identificado!.escalaId,
+          escalaId: identificado.escalaId,
           tipo,
           fotoBase64,
           lat,
@@ -319,20 +320,21 @@ async function tirarSelfie(): Promise<string> {
     });
     await video.play();
 
+    aviso.textContent = "Preparando a prova de vida…";
     const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
     const vision = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm",
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm",
     );
     const landmarker = await FaceLandmarker.createFromOptions(vision, {
       baseOptions: {
-        modelAssetPath:
-          "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+        modelAssetPath: "/mediapipe/face_landmarker.task",
       },
       runningMode: "VIDEO",
       numFaces: 1,
       outputFaceBlendshapes: true,
     });
 
+    aviso.textContent = "Olhe para a câmera e pisque duas vezes";
     return await new Promise<string>((resolve, reject) => {
       const inicio = performance.now();
       let olhosFechados = false;

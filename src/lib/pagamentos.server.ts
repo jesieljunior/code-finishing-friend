@@ -172,7 +172,7 @@ export async function enviarPix(supabase: any, pagamentoId: string, empresaId?: 
   const { data: pagamento } = await supabase
     .from("pagamentos")
     .select(
-      "id, valor, status, fechamento_id, fechamentos(escala_id, escalas(freelancers(nome, chave_pix), equipes(evento_id, eventos(nome, empresa_id))))",
+      "id, valor, status, fechamento_id, chave_idempotencia, fechamentos(escala_id, escalas(freelancers(nome, chave_pix), equipes(evento_id, eventos(nome, empresa_id))))",
     )
     .eq("id", pagamentoId)
     .maybeSingle();
@@ -199,20 +199,21 @@ export async function enviarPix(supabase: any, pagamentoId: string, empresaId?: 
 
   const valor = Number(pagamento.valor);
   const empresaDestino = empresaResolvida;
-  await exigirCadastroFiscalValidado(supabase, empresaDestino);
-  const { data: saldo } = await supabase.rpc("saldo_empresa", { _empresa_id: empresaDestino });
-  if (Number(saldo ?? 0) < valor)
-    throw new Error(
-      `Saldo insuficiente: disponível R$ ${Number(saldo ?? 0).toFixed(2)}, necessário R$ ${valor.toFixed(2)}. Adicione saldo para continuar.`,
-    );
-
   try {
+    await exigirCadastroFiscalValidado(supabase, empresaDestino);
+    const { data: saldo } = await supabase.rpc("saldo_empresa", { _empresa_id: empresaDestino });
+    if (Number(saldo ?? 0) < valor)
+      throw new Error(
+        `Saldo insuficiente: disponível R$ ${Number(saldo ?? 0).toFixed(2)}, necessário R$ ${valor.toFixed(2)}. Adicione saldo para continuar.`,
+      );
+
     const { transferirPix } = await import("./asaas.server");
     const transferencia = await transferirPix({
       valor,
       chavePix,
       descricao: `PayCrew — ${freelancer?.nome ?? "freelancer"} · ${evento?.nome ?? "evento"}`,
       referenciaExterna: pagamento.id,
+      chaveIdempotencia: pagamento.chave_idempotencia,
     });
 
     await supabase

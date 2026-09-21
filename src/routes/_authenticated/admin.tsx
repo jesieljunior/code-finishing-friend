@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -21,6 +22,7 @@ import { useSessao } from "@/hooks/use-sessao";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { ROTULO_MODELO_COBRANCA, moeda, type ModeloCobranca } from "@/lib/dominio";
+import { revisarCadastroFiscal } from "@/lib/fiscal.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -106,6 +108,7 @@ function Admin() {
 
 function Agencias() {
   const queryClient = useQueryClient();
+  const revisarFiscalFn = useServerFn(revisarCadastroFiscal);
 
   const q = useQuery({
     queryKey: ["admin", "agencias"],
@@ -158,6 +161,16 @@ function Agencias() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const revisarFiscal = useMutation({
+    mutationFn: ({ empresaId, decisao }: { empresaId: string; decisao: "validado" | "rejeitado" }) =>
+      revisarFiscalFn({ data: { empresaId, decisao } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "agencias"] });
+      toast.success("Cadastro fiscal revisado.");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   if (q.isPending) return <LoadingBloco />;
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (q.data.empresas.length === 0)
@@ -176,6 +189,9 @@ function Agencias() {
                   {e.cnpj} · {a?.status ?? "sem assinatura"}
                   {a?.trial_ate ? ` · teste até ${a.trial_ate}` : ""}
                 </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Fiscal: {e.fiscal_status} · {[e.razao_social, e.municipio, e.uf].filter(Boolean).join(" · ") || "dados incompletos"}
+                </p>
               </div>
               <label className="flex items-center gap-2 text-xs">
                 Ativa
@@ -184,6 +200,12 @@ function Agencias() {
                   onCheckedChange={(v) => alternarAtiva.mutate({ id: e.id, ativa: v })}
                 />
               </label>
+              {e.fiscal_status === "pendente" ? (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" disabled={revisarFiscal.isPending} onClick={() => revisarFiscal.mutate({ empresaId: e.id, decisao: "rejeitado" })}>Rejeitar fiscal</Button>
+                  <Button size="sm" disabled={revisarFiscal.isPending} onClick={() => revisarFiscal.mutate({ empresaId: e.id, decisao: "validado" })}>Validar fiscal</Button>
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

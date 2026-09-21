@@ -1,10 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useState } from "react";
 
 import { AppShell } from "@/components/app-shell";
 import { ErrorState, LoadingBloco } from "@/components/states";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/use-sessao";
 import {
@@ -105,6 +109,20 @@ function Configuracoes() {
     },
   });
 
+  const empresa = useQuery({
+    queryKey: ["configuracoes", "empresa", empresaId],
+    enabled: Boolean(empresaId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("empresas")
+        .select("id, cnpj, razao_social, regime_fiscal, municipio, uf, codigo_servico, fiscal_status")
+        .eq("id", empresaId ?? "")
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const salvar = useMutation({
     mutationFn: async (patch: Partial<Configuracao>) => {
       if (!empresaId) throw new Error("Agência não encontrada.");
@@ -152,7 +170,72 @@ function Configuracoes() {
       ) : null}
 
       {plano.data ? <PlanoCobranca plano={plano.data} /> : null}
+      {empresa.data ? <CadastroFiscal empresa={empresa.data} /> : null}
     </AppShell>
+  );
+}
+
+function CadastroFiscal({ empresa }: { empresa: {
+  id: string;
+  cnpj: string;
+  razao_social: string | null;
+  regime_fiscal: string | null;
+  municipio: string | null;
+  uf: string | null;
+  codigo_servico: string | null;
+  fiscal_status: string;
+} }) {
+  const queryClient = useQueryClient();
+  const [razaoSocial, setRazaoSocial] = useState(empresa.razao_social ?? "");
+  const [regimeFiscal, setRegimeFiscal] = useState(empresa.regime_fiscal ?? "");
+  const [municipio, setMunicipio] = useState(empresa.municipio ?? "");
+  const [uf, setUf] = useState(empresa.uf ?? "");
+  const [codigoServico, setCodigoServico] = useState(empresa.codigo_servico ?? "");
+
+  const enviar = useMutation({
+    mutationFn: async () => {
+      if (![razaoSocial, regimeFiscal, municipio, uf, codigoServico].every((v) => v.trim())) {
+        throw new Error("Preencha todos os dados fiscais para enviar à análise.");
+      }
+      if (uf.trim().length !== 2) throw new Error("UF deve ter duas letras.");
+      const { error } = await supabase.from("empresas").update({
+        razao_social: razaoSocial.trim(),
+        regime_fiscal: regimeFiscal.trim(),
+        municipio: municipio.trim(),
+        uf: uf.trim().toUpperCase(),
+        codigo_servico: codigoServico.trim(),
+        fiscal_status: "pendente",
+      }).eq("id", empresa.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["configuracoes", "empresa"] });
+      toast.success("Cadastro fiscal enviado para análise.");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  return (
+    <section className="mt-6 max-w-2xl border-t border-border pt-5">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold">Cadastro fiscal da agência</h2>
+          <p className="text-xs text-muted-foreground">Necessário para liberar pagamentos aos colaboradores.</p>
+        </div>
+        <span className="text-xs font-medium uppercase text-muted-foreground">{empresa.fiscal_status}</span>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5"><Label>CNPJ</Label><Input value={empresa.cnpj} disabled /></div>
+        <div className="space-y-1.5"><Label>Razão social</Label><Input value={razaoSocial} onChange={(e) => setRazaoSocial(e.target.value)} /></div>
+        <div className="space-y-1.5"><Label>Regime fiscal</Label><Input value={regimeFiscal} onChange={(e) => setRegimeFiscal(e.target.value)} /></div>
+        <div className="space-y-1.5"><Label>Município</Label><Input value={municipio} onChange={(e) => setMunicipio(e.target.value)} /></div>
+        <div className="space-y-1.5"><Label>UF</Label><Input maxLength={2} value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} /></div>
+        <div className="space-y-1.5"><Label>Código de serviço</Label><Input value={codigoServico} onChange={(e) => setCodigoServico(e.target.value)} /></div>
+      </div>
+      <Button className="mt-4" disabled={enviar.isPending || empresa.fiscal_status === "validado"} onClick={() => enviar.mutate()}>
+        {empresa.fiscal_status === "validado" ? "Cadastro validado" : "Enviar para análise"}
+      </Button>
+    </section>
   );
 }
 

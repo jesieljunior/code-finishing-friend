@@ -69,7 +69,8 @@ function FormFreelancer({
     mutationFn: async () => {
       const digitos = soDigitos(cpf);
       if (digitos.length !== 11) throw new Error("CPF deve ter 11 dígitos.");
-      const salario = salarioMensal ? Number(salarioMensal.replace(",", ".")) : null;
+      const salarioInformado = salarioMensal ? Number(salarioMensal.replace(",", ".")) : null;
+      const salario = tipoVinculo === "clt" ? salarioInformado : null;
       if (tipoVinculo === "clt" && (!salario || salario <= 0)) {
         throw new Error("Informe o salário mensal do colaborador CLT.");
       }
@@ -87,7 +88,7 @@ function FormFreelancer({
         ? await supabase.from("freelancers").update(payload).eq("id", freelancer.id)
         : await supabase
             .from("freelancers")
-            .insert({ ...payload, empresa_id: empresaId! });
+            .insert({ ...payload, empresa_id: empresaId });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -124,7 +125,7 @@ function FormFreelancer({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="f-salario">Salário mensal (CLT)</Label>
-          <Input id="f-salario" inputMode="decimal" value={salarioMensal} onChange={(e) => setSalarioMensal(e.target.value)} placeholder="0,00" />
+          <Input id="f-salario" inputMode="decimal" disabled={tipoVinculo !== "clt"} value={tipoVinculo === "clt" ? salarioMensal : ""} onChange={(e) => setSalarioMensal(e.target.value)} placeholder={tipoVinculo === "clt" ? "0,00" : "Não se aplica"} />
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -184,6 +185,7 @@ function FormFreelancer({
 
 function Freelancers() {
   const { empresaId } = useSessao();
+  const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
   const [soAtivos, setSoAtivos] = useState(true);
   const [novo, setNovo] = useState(false);
@@ -229,10 +231,11 @@ function Freelancers() {
       if (!linhas.length) throw new Error("A planilha não possui colaboradores.");
 
       const registros = linhas.map((linha, index) => {
-        const tipo = String(linha.tipo_vinculo || "frela").toLowerCase();
-        const salario = linha.salario_mensal === "" ? null : Number(linha.salario_mensal);
-        const cpf = soDigitos(String(linha.cpf));
-        if (!String(linha.nome).trim() || cpf.length !== 11 || !String(linha.chave_pix).trim()) {
+        const tipo = String(linha["tipo_vinculo"] || "frela").toLowerCase();
+        const salarioInformado = linha["salario_mensal"] === "" ? null : Number(linha["salario_mensal"]);
+        const salario = tipo === "clt" ? salarioInformado : null;
+        const cpf = soDigitos(String(linha["cpf"]));
+        if (!String(linha["nome"]).trim() || cpf.length !== 11 || !String(linha["chave_pix"]).trim()) {
           throw new Error(`Linha ${index + 2}: nome, CPF e chave Pix são obrigatórios.`);
         }
         if (tipo !== "frela" && tipo !== "clt") {
@@ -243,11 +246,11 @@ function Freelancers() {
         }
         return {
           empresa_id: empresaId,
-          nome: String(linha.nome).trim(),
+          nome: String(linha["nome"]).trim(),
           cpf,
-          telefone: String(linha.telefone).trim() || null,
-          funcao: String(linha.funcao).trim() || null,
-          chave_pix: String(linha.chave_pix).trim(),
+          telefone: String(linha["telefone"]).trim() || null,
+          funcao: String(linha["funcao"]).trim() || null,
+          chave_pix: String(linha["chave_pix"]).trim(),
           tipo_vinculo: tipo,
           salario_mensal: salario,
           ativo: true,
