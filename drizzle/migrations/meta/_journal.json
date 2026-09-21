@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790009248104,
+      "tag": "0000_cadastro_fiscal_pix",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790009267409,
+      "tag": "0001_vinculo_frela_clt",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790009297506,
+      "tag": "0002_tenant_isolation_and_staff_integrity",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790009339278,
+      "tag": "0003_protect_fiscal_validation",
+      "breakpoints": true
+    }
+  ]
+}

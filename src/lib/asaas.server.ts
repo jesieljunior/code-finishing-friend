@@ -155,6 +155,7 @@ export async function transferirPix(dados: {
   chavePix: string;
   descricao: string;
   referenciaExterna: string;
+  chaveIdempotencia: string;
 }): Promise<TransferenciaAsaas> {
   return chamar<TransferenciaAsaas>("/transfers", {
     method: "POST",
@@ -165,6 +166,7 @@ export async function transferirPix(dados: {
       pixAddressKeyType: tipoChavePix(dados.chavePix),
       description: dados.descricao,
       externalReference: dados.referenciaExterna,
+      idempotencyKey: dados.chaveIdempotencia,
     },
   });
 }
