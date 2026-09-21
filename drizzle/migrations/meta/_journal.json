@@ -8,6 +8,13 @@
       "when": 1790009248104,
       "tag": "0000_cadastro_fiscal_pix",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790009267409,
+      "tag": "0001_vinculo_frela_clt",
+      "breakpoints": true
     }
   ]
 }
