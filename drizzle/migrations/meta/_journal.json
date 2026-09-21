@@ -15,6 +15,13 @@
       "when": 1790009267409,
       "tag": "0001_vinculo_frela_clt",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790009297506,
+      "tag": "0002_tenant_isolation_and_staff_integrity",
+      "breakpoints": true
     }
   ]
 }
