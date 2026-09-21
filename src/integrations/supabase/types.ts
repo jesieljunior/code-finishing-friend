@@ -685,40 +685,64 @@ export type Database = {
           ativa: boolean
           atualizado_em: string
           cnpj: string
+          codigo_servico: string | null
           criado_em: string
           email_cobranca: string | null
+          fiscal_status: string
+          fiscal_validado_em: string | null
+          fiscal_validado_por: string | null
           id: string
+          municipio: string | null
           nome: string
           parceiro_aprovada_em: string | null
           parceiro_conta_status: string
           parceiro_wallet_id: string | null
+          razao_social: string | null
+          regime_fiscal: string | null
           subconta_parceiro_id: string | null
+          uf: string | null
         }
         Insert: {
           ativa?: boolean
           atualizado_em?: string
           cnpj: string
+          codigo_servico?: string | null
           criado_em?: string
           email_cobranca?: string | null
+          fiscal_status?: string
+          fiscal_validado_em?: string | null
+          fiscal_validado_por?: string | null
           id?: string
+          municipio?: string | null
           nome: string
           parceiro_aprovada_em?: string | null
           parceiro_conta_status?: string
           parceiro_wallet_id?: string | null
+          razao_social?: string | null
+          regime_fiscal?: string | null
           subconta_parceiro_id?: string | null
+          uf?: string | null
         }
         Update: {
           ativa?: boolean
           atualizado_em?: string
           cnpj?: string
+          codigo_servico?: string | null
           criado_em?: string
           email_cobranca?: string | null
+          fiscal_status?: string
+          fiscal_validado_em?: string | null
+          fiscal_validado_por?: string | null
           id?: string
+          municipio?: string | null
           nome?: string
           parceiro_aprovada_em?: string | null
           parceiro_conta_status?: string
           parceiro_wallet_id?: string | null
+          razao_social?: string | null
+          regime_fiscal?: string | null
           subconta_parceiro_id?: string | null
+          uf?: string | null
         }
         Relationships: []
       }
@@ -1603,6 +1627,10 @@ export type Database = {
       empresa_do_fechamento: {
         Args: { _fechamento_id: string }
         Returns: string
+      }
+      empresa_fiscal_validada: {
+        Args: { _empresa_id: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
