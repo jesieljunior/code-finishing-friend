@@ -11,7 +11,7 @@
 - [ ] Validate the dependency upgrade, CLT payroll, fiscal payment lock, scheduled Pix, and liveness flow end to end
 - [ ] Review and remove obsolete or excessive test-account privileges before issuing final credentials
 - [ ] Fix cross-organization data isolation and verify every agency-facing read/write path
-- [ ] Fix freelancer/employee registration validation for Frela and CLT
+- [x] Fix freelancer/employee registration validation for Frela and CLT
 - [ ] Repair and validate liveness/selfie check-in end to end
 - [ ] Repair Pix payouts to freelancers and expose actionable failure reasons
 - [ ] Audit the agile-workflow feature and close other critical end-to-end gaps

@@ -10,9 +10,12 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSessao } from "@/hooks/use-sessao";
-import { supabase } from "@/integrations/supabase/client";
 import { dataHora, moeda } from "@/lib/dominio";
-import { conferirCobrancaSuporte, reenviarPixSuporte } from "@/lib/suporte.functions";
+import {
+  conferirCobrancaSuporte,
+  listarDadosSuporte,
+  reenviarPixSuporte,
+} from "@/lib/suporte.functions";
 
 export const Route = createFileRoute("/_authenticated/suporte")({
   head: () => ({
@@ -81,17 +84,13 @@ function Suporte() {
 function Cobrancas() {
   const queryClient = useQueryClient();
   const conferirFn = useServerFn(conferirCobrancaSuporte);
+  const listarFn = useServerFn(listarDadosSuporte);
 
   const q = useQuery({
     queryKey: ["suporte", "cobrancas"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cobrancas")
-        .select("*, empresas(nome)")
-        .order("criado_em", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return data;
+      const dados = await listarFn();
+      return dados.cobrancas;
     },
   });
 
@@ -149,17 +148,13 @@ function Cobrancas() {
 function Pagamentos() {
   const queryClient = useQueryClient();
   const reenviarFn = useServerFn(reenviarPixSuporte);
+  const listarFn = useServerFn(listarDadosSuporte);
 
   const q = useQuery({
     queryKey: ["suporte", "pagamentos"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pagamentos")
-        .select("*")
-        .order("criado_em", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return data;
+      const dados = await listarFn();
+      return dados.pagamentos;
     },
   });
 

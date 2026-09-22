@@ -20,6 +20,30 @@ async function autorizar(supabase: any, userId: string) {
   return papeis;
 }
 
+/** Lista apenas os dados operacionais necessários ao atendimento. */
+export const listarDadosSuporte = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    requirePlatformContext(context);
+    await autorizar(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: cobrancas, error: cobrancasError }, { data: pagamentos, error: pagamentosError }] =
+      await Promise.all([
+        supabaseAdmin
+          .from("cobrancas")
+          .select("id, empresa_id, tipo, descricao, valor, status, parceiro_cobranca_id, erro, criado_em, empresas(nome)")
+          .order("criado_em", { ascending: false })
+          .limit(200),
+        supabaseAdmin
+          .from("pagamentos")
+          .select("id, valor, status, txid_parceiro, erro, criado_em")
+          .order("criado_em", { ascending: false })
+          .limit(200),
+      ]);
+    if (cobrancasError || pagamentosError) throw new Error("Não foi possível carregar o atendimento.");
+    return { cobrancas: cobrancas ?? [], pagamentos: pagamentos ?? [] };
+  });
+
 /** Recoloca o pagamento na fila e tenta o Pix de novo. */
 export const reenviarPixSuporte = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -28,8 +52,8 @@ export const reenviarPixSuporte = createServerFn({ method: "POST" })
     requirePlatformContext(context);
     await autorizar(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const empresaId = await resolverEmpresaDoPagamento(context.supabase, data.pagamentoId);
-    const { data: pagamento } = await context.supabase
+    const empresaId = await resolverEmpresaDoPagamento(supabaseAdmin, data.pagamentoId);
+    const { data: pagamento } = await supabaseAdmin
       .from("pagamentos")
       .select("id, fechamento_id, status")
       .eq("id", data.pagamentoId)
@@ -39,12 +63,12 @@ export const reenviarPixSuporte = createServerFn({ method: "POST" })
       .from("eventos")
       .select("id, empresa_id")
       .eq("id", (
-        await context.supabase
+        await supabaseAdmin
           .from("equipes")
           .select("evento_id")
           .eq("id", (
-            await context.supabase.from("escalas").select("equipe_id").eq("id", (
-              await context.supabase.from("fechamentos").select("escala_id").eq("id", pagamento.fechamento_id).maybeSingle()
+            await supabaseAdmin.from("escalas").select("equipe_id").eq("id", (
+              await supabaseAdmin.from("fechamentos").select("escala_id").eq("id", pagamento.fechamento_id).maybeSingle()
             )?.data?.escala_id ?? ""
           ).maybeSingle())?.data?.equipe_id ?? ""
       ).maybeSingle())?.data?.evento_id ?? ""
@@ -78,7 +102,7 @@ export const conferirCobrancaSuporte = createServerFn({ method: "POST" })
     await autorizar(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: cobranca } = await context.supabase
+    const { data: cobranca } = await supabaseAdmin
       .from("cobrancas")
       .select("id, empresa_id, valor, status, parceiro_cobranca_id, descricao")
       .eq("id", data.id)

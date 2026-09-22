@@ -84,6 +84,7 @@ function FormFreelancer({
         salario_mensal: salario,
         ativo,
       };
+      if (!empresaId) throw new Error("Agência não identificada.");
       const { error } = freelancer
         ? await supabase.from("freelancers").update(payload).eq("id", freelancer.id)
         : await supabase
