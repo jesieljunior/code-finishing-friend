@@ -29,6 +29,13 @@
       "when": 1790009339278,
       "tag": "0003_protect_fiscal_validation",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790036941354,
+      "tag": "0004_restrict_support_direct_data_access",
+      "breakpoints": true
     }
   ]
 }
