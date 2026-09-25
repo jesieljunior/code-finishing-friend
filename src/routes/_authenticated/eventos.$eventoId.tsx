@@ -39,6 +39,7 @@ import {
   type StatusEvento,
   type TipoValor,
 } from "@/lib/dominio";
+import { parseValorPositivo } from "@/lib/moeda";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/eventos/$eventoId")({
@@ -228,12 +229,13 @@ function FormEscala({
 
   const salvar = useMutation({
     mutationFn: async () => {
+      const valorNumerico = parseValorPositivo(valor);
       const { data, error } = await supabase
         .from("escalas")
         .insert({
           equipe_id: equipeId,
           freelancer_id: freelancerId,
-          valor_combinado: Number(valor),
+          valor_combinado: valorNumerico,
           tipo_valor: tipo,
           status: "convidado",
           convite_enviado_em: new Date().toISOString(),
@@ -292,9 +294,8 @@ function FormEscala({
           <Input
             id="es-valor"
             required
-            type="number"
-            min="0"
-            step="0.01"
+            inputMode="decimal"
+            placeholder="0,00"
             value={valor}
             onChange={(e) => setValor(e.target.value)}
           />

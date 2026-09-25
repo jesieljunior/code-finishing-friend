@@ -151,26 +151,49 @@ function horasIntervalos(pontos: Ponto[]): number {
 export function calcularFechamento(
   escala: Pick<Escala, "valor_combinado" | "tipo_valor">,
   pontosDaEscala: Ponto[],
-): { horas: number; valor: number } {
+): { horas: number; valor: number; requerRevisao: boolean; motivoRevisao: string | null } {
   const pontos = [...pontosDaEscala].sort(
     (a, b) => new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime(),
   );
 
   const entrada = pontos.find((p) => p.tipo === "entrada" && p.status === "aprovado");
   const saida = [...pontos].reverse().find((p) => p.tipo === "saida" && p.status === "aprovado");
+  const combinado = Number(escala.valor_combinado);
 
-  if (!entrada || !saida) return { horas: 0, valor: 0 };
+  if (!Number.isFinite(combinado) || combinado < 0.01) {
+    return {
+      horas: 0,
+      valor: 0,
+      requerRevisao: true,
+      motivoRevisao: "Valor combinado inválido.",
+    };
+  }
+
+  if (!entrada || !saida) {
+    return {
+      horas: 0,
+      valor: escala.tipo_valor === "diaria" ? arredonda(combinado) : 0,
+      requerRevisao: true,
+      motivoRevisao: "Sem entrada e saída aprovadas.",
+    };
+  }
   const ini = new Date(entrada.registrado_em).getTime();
   const fim = new Date(saida.registrado_em).getTime();
-  if (fim <= ini) return { horas: 0, valor: 0 };
+  if (fim <= ini) {
+    return {
+      horas: 0,
+      valor: escala.tipo_valor === "diaria" ? arredonda(combinado) : 0,
+      requerRevisao: true,
+      motivoRevisao: "A saída não está depois da entrada.",
+    };
+  }
 
   const bruto = (fim - ini) / 3_600_000;
   const horas = arredonda(Math.max(bruto - horasIntervalos(pontos), 0));
-  const combinado = Number(escala.valor_combinado);
   const valor =
     escala.tipo_valor === "diaria" ? arredonda(combinado) : arredonda(horas * combinado);
 
-  return { horas, valor };
+  return { horas, valor, requerRevisao: false, motivoRevisao: null };
 }
 
 export function calcularFolhaClt({

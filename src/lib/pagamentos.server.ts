@@ -200,6 +200,9 @@ export async function enviarPix(supabase: any, pagamentoId: string, empresaId?: 
   const valor = Number(pagamento.valor);
   const empresaDestino = empresaResolvida;
   try {
+    if (!Number.isFinite(valor) || valor < 0.01) {
+      throw new Error("Pagamento inválido: corrija o fechamento para um valor mínimo de R$ 0,01.");
+    }
     await exigirCadastroFiscalValidado(supabase, empresaDestino);
     const { data: saldo } = await supabase.rpc("saldo_empresa", { _empresa_id: empresaDestino });
     if (Number(saldo ?? 0) < valor)
