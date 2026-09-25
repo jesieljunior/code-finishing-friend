@@ -21,6 +21,12 @@ const cobrancaSchema = z.object({
   descricao: z.string().min(3).max(200),
 });
 
+const pagamentoSchema = z.object({ fechamentoId: z.string().uuid() });
+const agendamentoSchema = z.object({
+  pagamentoIds: z.array(z.string().uuid()).min(1).max(100),
+  dataAgendada: z.string().datetime(),
+});
+
 /** Cria a cobrança do cliente do evento no Asaas, com split da taxa. */
 export const criarCobranca = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -241,4 +247,107 @@ export const executarPagamentoPix = createServerFn({ method: "POST" })
       throw new Error("Pagamento não pertence à sua agência.");
     }
     return enviarPix(context.supabase, data.pagamentoId, empresaId);
+  });
+
+/** Gera o pagamento exclusivamente do valor aprovado no fechamento. */
+export const gerarPagamento = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => pagamentoSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const organizacao = requireOrganizationContext(context);
+    const { exigirCapacidade } = await import("./autorizacao.server");
+    await exigirCapacidade(context.supabase, context.userId, "financeiro.gerenciar");
+
+    const { data: fechamento } = await context.supabase
+      .from("fechamentos")
+      .select("id, valor_calculado, status, escala_id")
+      .eq("id", data.fechamentoId)
+      .maybeSingle();
+    if (!fechamento) throw new Error("Fechamento não encontrado.");
+    if (fechamento.status !== "aprovado") throw new Error("Aprove o fechamento antes de pagar.");
+
+    const { resolverEmpresaDoPagamento } = await import("./pagamentos.server");
+    const { data: existente } = await context.supabase
+      .from("pagamentos")
+      .select("id")
+      .eq("fechamento_id", fechamento.id)
+      .maybeSingle();
+    if (existente) throw new Error("Já existe pagamento para este fechamento.");
+
+    const valor = Number(fechamento.valor_calculado);
+    if (!Number.isFinite(valor) || valor < 0.01) {
+      throw new Error("O fechamento precisa ter valor mínimo de R$ 0,01 antes do pagamento.");
+    }
+
+    const { data: pagamento, error } = await context.supabase
+      .from("pagamentos")
+      .insert({
+        fechamento_id: fechamento.id,
+        valor,
+        status: "pendente",
+        chave_idempotencia: crypto.randomUUID(),
+      })
+      .select("id")
+      .single();
+    if (error || !pagamento) throw new Error(error?.message ?? "Falha ao gerar pagamento.");
+
+    const empresaId = await resolverEmpresaDoPagamento(context.supabase, pagamento.id);
+    if (empresaId !== organizacao.empresaId) throw new Error("Pagamento não pertence à sua agência.");
+    return { id: pagamento.id, valor };
+  });
+
+export const agendarPagamentos = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => agendamentoSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const organizacao = requireOrganizationContext(context);
+    const { exigirCapacidade } = await import("./autorizacao.server");
+    await exigirCapacidade(context.supabase, context.userId, "financeiro.gerenciar");
+    const quando = new Date(data.dataAgendada);
+    if (Number.isNaN(quando.getTime()) || quando <= new Date()) {
+      throw new Error("Escolha uma data futura para os pagamentos.");
+    }
+
+    const { resolverEmpresaDoPagamento } = await import("./pagamentos.server");
+    for (const id of data.pagamentoIds) {
+      const empresaId = await resolverEmpresaDoPagamento(context.supabase, id);
+      if (empresaId !== organizacao.empresaId) throw new Error("Pagamento fora da sua agência.");
+    }
+
+    const { error } = await context.supabase
+      .from("pagamentos")
+      .update({ status: "agendado", data_agendada: quando.toISOString() })
+      .in("id", data.pagamentoIds)
+      .eq("status", "pendente")
+      .gte("valor", 0.01);
+    if (error) throw error;
+    return { quantidade: data.pagamentoIds.length };
+  });
+
+export const reabrirPagamentoFalho = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ pagamentoId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const organizacao = requireOrganizationContext(context);
+    const { exigirCapacidade } = await import("./autorizacao.server");
+    await exigirCapacidade(context.supabase, context.userId, "financeiro.gerenciar");
+    const { resolverEmpresaDoPagamento } = await import("./pagamentos.server");
+    const empresaId = await resolverEmpresaDoPagamento(context.supabase, data.pagamentoId);
+    if (empresaId !== organizacao.empresaId) throw new Error("Pagamento fora da sua agência.");
+
+    const { data: atual } = await context.supabase
+      .from("pagamentos")
+      .select("status, tentativas, valor")
+      .eq("id", data.pagamentoId)
+      .maybeSingle();
+    if (!atual || atual.status !== "falhou") throw new Error("Pagamento não está em falha.");
+    if (Number(atual.valor) < 0.01) throw new Error("Corrija o fechamento antes de tentar novamente.");
+
+    const { error } = await context.supabase
+      .from("pagamentos")
+      .update({ status: "pendente", erro: null, tentativas: atual.tentativas + 1 })
+      .eq("id", data.pagamentoId)
+      .eq("status", "falhou");
+    if (error) throw error;
+    return { ok: true };
   });
