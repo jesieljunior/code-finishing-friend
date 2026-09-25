@@ -1,12 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { Calculator, Check, TriangleAlert } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Calculator, Check, Pencil, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
 import { EmptyState, ErrorState, LoadingBloco } from "@/components/states";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useSessao } from "@/hooks/use-sessao";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -18,6 +27,8 @@ import {
   um,
   type Ponto,
 } from "@/lib/dominio";
+import { parseValorPositivo } from "@/lib/moeda";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/fechamento")({
   head: () => ({
@@ -41,6 +52,11 @@ export const Route = createFileRoute("/_authenticated/fechamento")({
 function Fechamento() {
   const queryClient = useQueryClient();
   const { sessao } = useSessao();
+  const [correcao, setCorrecao] = useState<{
+    escalaId: string;
+    fechamentoId: string | null;
+    valor: string;
+  } | null>(null);
 
   const eventos = useQuery({
     queryKey: ["fechamento", "eventos"],
@@ -112,6 +128,32 @@ function Fechamento() {
       if (error) throw error;
     },
     onSuccess: invalidar,
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const corrigirValor = useMutation({
+    mutationFn: async () => {
+      if (!correcao) throw new Error("Escala não identificada.");
+      const valor = parseValorPositivo(correcao.valor);
+      const { error: erroEscala } = await supabase
+        .from("escalas")
+        .update({ valor_combinado: valor })
+        .eq("id", correcao.escalaId);
+      if (erroEscala) throw erroEscala;
+      if (correcao.fechamentoId) {
+        const { error: erroFechamento } = await supabase
+          .from("fechamentos")
+          .update({ valor_calculado: valor })
+          .eq("id", correcao.fechamentoId)
+          .neq("status", "aprovado");
+        if (erroFechamento) throw erroFechamento;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Valor da diária corrigido.");
+      setCorrecao(null);
+      invalidar();
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -192,6 +234,11 @@ function Fechamento() {
                             <span className="tabular-nums font-medium">
                               {moeda(f ? f.valor_calculado : previa.valor)}
                             </span>
+                            {previa.requerRevisao ? (
+                              <span className="inline-flex items-center gap-1 text-xs text-warning-foreground">
+                                <TriangleAlert className="size-3.5" /> {previa.motivoRevisao}
+                              </span>
+                            ) : null}
                             {f ? (
                               <>
                                 <StatusBadge status={f.status} />
@@ -217,8 +264,30 @@ function Fechamento() {
                                     <TriangleAlert className="size-4" /> Contestar
                                   </Button>
                                 ) : null}
+                                {es.tipo_valor === "diaria" && f.status !== "aprovado" ? (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      setCorrecao({
+                                        escalaId: es.id,
+                                        fechamentoId: f.id,
+                                        valor: String(es.valor_combinado),
+                                      })
+                                    }
+                                  >
+                                    <Pencil className="size-4" /> Corrigir diária
+                                  </Button>
+                                ) : null}
                               </>
                             ) : (
+                            {previa.requerRevisao ? (
+                              <Button asChild size="sm" variant="outline">
+                                <Link to="/operacao/$eventoId" params={{ eventoId: e.id }}>
+                                  Corrigir pontos
+                                </Link>
+                              </Button>
+                            ) : null}
                               <span className="text-xs text-muted-foreground">
                                 prévia
                               </span>
@@ -234,6 +303,30 @@ function Fechamento() {
           })}
         </div>
       )}
+      <Dialog open={Boolean(correcao)} onOpenChange={(aberto) => !aberto && setCorrecao(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Corrigir valor da diária</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="valor-diaria-correcao">Valor combinado (R$)</Label>
+            <Input
+              id="valor-diaria-correcao"
+              inputMode="decimal"
+              value={correcao?.valor ?? ""}
+              onChange={(e) =>
+                setCorrecao((atual) => (atual ? { ...atual, valor: e.target.value } : atual))
+              }
+              placeholder="0,00"
+            />
+          </div>
+          <DialogFooter>
+            <Button onClick={() => corrigirValor.mutate()} disabled={corrigirValor.isPending}>
+              Salvar correção
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }

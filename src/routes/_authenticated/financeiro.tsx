@@ -24,10 +24,14 @@ import { useSessao } from "@/hooks/use-sessao";
 import { supabase } from "@/integrations/supabase/client";
 import { dataHora, lista, moeda, um } from "@/lib/dominio";
 import {
+  agendarPagamentos,
   criarCobranca,
   executarPagamentoPix,
+  gerarPagamento,
+  reabrirPagamentoFalho,
   sincronizarCobranca,
 } from "@/lib/financeiro.functions";
+import { parseValorPositivo } from "@/lib/moeda";
 
 export const Route = createFileRoute("/_authenticated/financeiro")({
   head: () => ({
@@ -63,6 +67,9 @@ function Financeiro() {
   const chamarCriarCobranca = useServerFn(criarCobranca);
   const chamarSincronizar = useServerFn(sincronizarCobranca);
   const chamarPix = useServerFn(executarPagamentoPix);
+  const chamarGerarPagamento = useServerFn(gerarPagamento);
+  const chamarAgendarPagamentos = useServerFn(agendarPagamentos);
+  const chamarReabrirPagamento = useServerFn(reabrirPagamentoFalho);
 
   const [clienteId, setClienteId] = useState("");
   const [eventoId, setEventoId] = useState("");
@@ -161,8 +168,7 @@ function Financeiro() {
 
   const emitir = useMutation({
     mutationFn: async () => {
-      const numero = Number(valor.replace(",", "."));
-      if (!Number.isFinite(numero) || numero <= 0) throw new Error("Informe um valor válido.");
+      const numero = parseValorPositivo(valor);
       return chamarCriarCobranca({
         data: {
           clienteId,
@@ -193,19 +199,7 @@ function Financeiro() {
   });
 
   const gerar = useMutation({
-    mutationFn: async (fechamentoId: string) => {
-      const f = fila.data?.find((x) => x.id === fechamentoId);
-      if (!f) throw new Error("Fechamento não encontrado.");
-      if (lista(f.pagamentos).length > 0)
-        throw new Error("Já existe pagamento para este fechamento.");
-      const { error } = await supabase.from("pagamentos").insert({
-        fechamento_id: f.id,
-        valor: f.valor_calculado,
-        status: "pendente",
-        chave_idempotencia: crypto.randomUUID(),
-      });
-      if (error) throw error;
-    },
+    mutationFn: (fechamentoId: string) => chamarGerarPagamento({ data: { fechamentoId } }),
     onSuccess: () => {
       toast.success("Pagamento criado na fila.");
       invalidar();
@@ -219,11 +213,9 @@ function Financeiro() {
       if (!dataPagamento || Number.isNaN(data.getTime()) || data <= new Date()) {
         throw new Error("Escolha uma data futura para o pagamento.");
       }
-      const { error } = await supabase
-        .from("pagamentos")
-        .update({ status: "agendado", data_agendada: data.toISOString() })
-        .eq("id", id);
-      if (error) throw error;
+      return chamarAgendarPagamentos({
+        data: { pagamentoIds: [id], dataAgendada: data.toISOString() },
+      });
     },
     onSuccess: invalidar,
     onError: (e: Error) => toast.error(e.message),
@@ -236,12 +228,9 @@ function Financeiro() {
       if (!dataPagamento || Number.isNaN(data.getTime()) || data <= new Date()) {
         throw new Error("Escolha uma data futura para os pagamentos.");
       }
-      const { error } = await supabase
-        .from("pagamentos")
-        .update({ status: "agendado", data_agendada: data.toISOString() })
-        .in("id", pagamentosSelecionados)
-        .eq("status", "pendente");
-      if (error) throw error;
+      return chamarAgendarPagamentos({
+        data: { pagamentoIds: pagamentosSelecionados, dataAgendada: data.toISOString() },
+      });
     },
     onSuccess: () => {
       setPagamentosSelecionados([]);
@@ -265,18 +254,7 @@ function Financeiro() {
   });
 
   const tentarNovamente = useMutation({
-    mutationFn: async (id: string) => {
-      const { data: atual } = await supabase
-        .from("pagamentos")
-        .select("tentativas")
-        .eq("id", id)
-        .single();
-      const { error } = await supabase
-        .from("pagamentos")
-        .update({ status: "pendente", erro: null, tentativas: (atual?.tentativas ?? 0) + 1 })
-        .eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: (id: string) => chamarReabrirPagamento({ data: { pagamentoId: id } }),
     onSuccess: invalidar,
     onError: (e: Error) => toast.error(e.message),
   });
