@@ -15,3 +15,6 @@
 - [ ] Repair and validate liveness/selfie check-in end to end
 - [ ] Repair Pix payouts to freelancers and expose actionable failure reasons
 - [ ] Audit the agile-workflow feature and close other critical end-to-end gaps
+- [ ] Correct daily-rate propagation from event scale through closing and finance, including warnings and correction flow
+- [ ] Replace Asaas with Mercado Pago for new collections using connected agency accounts and embedded checkout
+- [ ] Preserve and reconcile historical Asaas charges, transfers, and webhooks during the gateway transition
