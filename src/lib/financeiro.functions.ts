@@ -266,7 +266,6 @@ export const gerarPagamento = createServerFn({ method: "POST" })
     if (!fechamento) throw new Error("Fechamento não encontrado.");
     if (fechamento.status !== "aprovado") throw new Error("Aprove o fechamento antes de pagar.");
 
-    const { resolverEmpresaDoPagamento } = await import("./pagamentos.server");
     const { data: existente } = await context.supabase
       .from("pagamentos")
       .select("id")
@@ -277,6 +276,14 @@ export const gerarPagamento = createServerFn({ method: "POST" })
     const valor = Number(fechamento.valor_calculado);
     if (!Number.isFinite(valor) || valor < 0.01) {
       throw new Error("O fechamento precisa ter valor mínimo de R$ 0,01 antes do pagamento.");
+    }
+
+    const { data: empresaId, error: erroEmpresa } = await context.supabase.rpc(
+      "empresa_da_escala",
+      { _escala_id: fechamento.escala_id },
+    );
+    if (erroEmpresa || empresaId !== organizacao.empresaId) {
+      throw new Error("Fechamento não pertence à sua agência.");
     }
 
     const { data: pagamento, error } = await context.supabase
@@ -291,8 +298,6 @@ export const gerarPagamento = createServerFn({ method: "POST" })
       .single();
     if (error || !pagamento) throw new Error(error?.message ?? "Falha ao gerar pagamento.");
 
-    const empresaId = await resolverEmpresaDoPagamento(context.supabase, pagamento.id);
-    if (empresaId !== organizacao.empresaId) throw new Error("Pagamento não pertence à sua agência.");
     return { id: pagamento.id, valor };
   });
 

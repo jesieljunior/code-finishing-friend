@@ -15,6 +15,7 @@ import { useSessao } from "@/hooks/use-sessao";
 import { supabase } from "@/integrations/supabase/client";
 import { dataHora, moeda } from "@/lib/dominio";
 import { sincronizarCobranca } from "@/lib/financeiro.functions";
+import { parseValorPositivo } from "@/lib/moeda";
 import { iniciarRecarga } from "@/lib/saldo.functions";
 
 export const Route = createFileRoute("/_authenticated/saldo")({
@@ -92,9 +93,8 @@ function Saldo() {
 
   const recarregar = useMutation({
     mutationFn: async () => {
-      const numero = Number(valor.replace(".", "").replace(",", "."));
-      if (!Number.isFinite(numero) || numero < 5)
-        throw new Error("Informe um valor de pelo menos R$ 5,00.");
+      const numero = parseValorPositivo(valor);
+      if (numero < 5) throw new Error("Informe um valor de pelo menos R$ 5,00.");
       return chamarRecarga({ data: { valor: numero, forma } });
     },
     onSuccess: (r) => {
