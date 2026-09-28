@@ -281,6 +281,8 @@ function Fechamento() {
                                 ) : null}
                               </>
                             ) : (
+                              <span className="text-xs text-muted-foreground">prévia</span>
+                            )}
                             {previa.requerRevisao ? (
                               <Button asChild size="sm" variant="outline">
                                 <Link to="/operacao/$eventoId" params={{ eventoId: e.id }}>
@@ -288,10 +290,6 @@ function Fechamento() {
                                 </Link>
                               </Button>
                             ) : null}
-                              <span className="text-xs text-muted-foreground">
-                                prévia
-                              </span>
-                            )}
                           </div>
                         </li>
                       );
