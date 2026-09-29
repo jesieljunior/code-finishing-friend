@@ -255,6 +255,7 @@ export type Database = {
       cobrancas: {
         Row: {
           atualizado_em: string
+          chave_idempotencia: string | null
           cliente_id: string | null
           criado_em: string
           descricao: string
@@ -267,6 +268,8 @@ export type Database = {
           pago_em: string | null
           parceiro_cobranca_id: string | null
           pix_copia_cola: string | null
+          provedor_pagamento: string
+          provedor_status: string | null
           status: Database["public"]["Enums"]["status_cobranca"]
           tipo: Database["public"]["Enums"]["tipo_cobranca"]
           valor: number
@@ -274,6 +277,7 @@ export type Database = {
         }
         Insert: {
           atualizado_em?: string
+          chave_idempotencia?: string | null
           cliente_id?: string | null
           criado_em?: string
           descricao?: string
@@ -286,6 +290,8 @@ export type Database = {
           pago_em?: string | null
           parceiro_cobranca_id?: string | null
           pix_copia_cola?: string | null
+          provedor_pagamento?: string
+          provedor_status?: string | null
           status?: Database["public"]["Enums"]["status_cobranca"]
           tipo: Database["public"]["Enums"]["tipo_cobranca"]
           valor: number
@@ -293,6 +299,7 @@ export type Database = {
         }
         Update: {
           atualizado_em?: string
+          chave_idempotencia?: string | null
           cliente_id?: string | null
           criado_em?: string
           descricao?: string
@@ -305,6 +312,8 @@ export type Database = {
           pago_em?: string | null
           parceiro_cobranca_id?: string | null
           pix_copia_cola?: string | null
+          provedor_pagamento?: string
+          provedor_status?: string | null
           status?: Database["public"]["Enums"]["status_cobranca"]
           tipo?: Database["public"]["Enums"]["tipo_cobranca"]
           valor?: number
@@ -691,6 +700,7 @@ export type Database = {
           fiscal_status: string
           fiscal_validado_em: string | null
           fiscal_validado_por: string | null
+          gateway_ativo: string
           id: string
           municipio: string | null
           nome: string
@@ -712,6 +722,7 @@ export type Database = {
           fiscal_status?: string
           fiscal_validado_em?: string | null
           fiscal_validado_por?: string | null
+          gateway_ativo?: string
           id?: string
           municipio?: string | null
           nome: string
@@ -733,6 +744,7 @@ export type Database = {
           fiscal_status?: string
           fiscal_validado_em?: string | null
           fiscal_validado_por?: string | null
+          gateway_ativo?: string
           id?: string
           municipio?: string | null
           nome?: string
@@ -1023,6 +1035,7 @@ export type Database = {
           empresa_id: string
           finalidade: string
           id: string
+          provedor_pagamento: string
           referencia_parceiro: string | null
           status: Database["public"]["Enums"]["status_funding"]
           valor_devolvido: number
@@ -1040,6 +1053,7 @@ export type Database = {
           empresa_id: string
           finalidade: string
           id?: string
+          provedor_pagamento?: string
           referencia_parceiro?: string | null
           status?: Database["public"]["Enums"]["status_funding"]
           valor_devolvido?: number
@@ -1057,6 +1071,7 @@ export type Database = {
           empresa_id?: string
           finalidade?: string
           id?: string
+          provedor_pagamento?: string
           referencia_parceiro?: string | null
           status?: Database["public"]["Enums"]["status_funding"]
           valor_devolvido?: number
@@ -1186,6 +1201,94 @@ export type Database = {
           },
         ]
       }
+      mercado_pago_contas: {
+        Row: {
+          access_token_cifrado: string
+          atualizado_em: string
+          criado_em: string
+          empresa_id: string
+          escopos: string | null
+          id: string
+          mercado_pago_user_id: string
+          refresh_token_cifrado: string | null
+          status: string
+          token_expira_em: string | null
+        }
+        Insert: {
+          access_token_cifrado: string
+          atualizado_em?: string
+          criado_em?: string
+          empresa_id: string
+          escopos?: string | null
+          id?: string
+          mercado_pago_user_id: string
+          refresh_token_cifrado?: string | null
+          status?: string
+          token_expira_em?: string | null
+        }
+        Update: {
+          access_token_cifrado?: string
+          atualizado_em?: string
+          criado_em?: string
+          empresa_id?: string
+          escopos?: string | null
+          id?: string
+          mercado_pago_user_id?: string
+          refresh_token_cifrado?: string | null
+          status?: string
+          token_expira_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mercado_pago_contas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mercado_pago_oauth_estados: {
+        Row: {
+          criado_em: string
+          empresa_id: string
+          estado_hash: string
+          expira_em: string
+          id: string
+          redirect_uri: string
+          usado_em: string | null
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          empresa_id: string
+          estado_hash: string
+          expira_em: string
+          id?: string
+          redirect_uri: string
+          usado_em?: string | null
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          empresa_id?: string
+          estado_hash?: string
+          expira_em?: string
+          id?: string
+          redirect_uri?: string
+          usado_em?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mercado_pago_oauth_estados_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movimentos_saldo: {
         Row: {
           atualizado_em: string
@@ -1309,6 +1412,7 @@ export type Database = {
           fechamento_id: string
           id: string
           parceiro_transferencia_id: string | null
+          provedor_pagamento: string
           status: Database["public"]["Enums"]["status_pagamento"]
           tentativas: number
           txid_parceiro: string | null
@@ -1326,6 +1430,7 @@ export type Database = {
           fechamento_id: string
           id?: string
           parceiro_transferencia_id?: string | null
+          provedor_pagamento?: string
           status?: Database["public"]["Enums"]["status_pagamento"]
           tentativas?: number
           txid_parceiro?: string | null
@@ -1343,6 +1448,7 @@ export type Database = {
           fechamento_id?: string
           id?: string
           parceiro_transferencia_id?: string | null
+          provedor_pagamento?: string
           status?: Database["public"]["Enums"]["status_pagamento"]
           tentativas?: number
           txid_parceiro?: string | null
@@ -1619,6 +1725,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      webhook_eventos: {
+        Row: {
+          atualizado_em: string
+          chave_idempotencia: string
+          criado_em: string
+          evento: string
+          id: string
+          payload: Json
+          provedor: string
+          status: string
+        }
+        Insert: {
+          atualizado_em?: string
+          chave_idempotencia: string
+          criado_em?: string
+          evento: string
+          id?: string
+          payload?: Json
+          provedor?: string
+          status?: string
+        }
+        Update: {
+          atualizado_em?: string
+          chave_idempotencia?: string
+          criado_em?: string
+          evento?: string
+          id?: string
+          payload?: Json
+          provedor?: string
+          status?: string
+        }
+        Relationships: []
       }
     }
     Views: {
