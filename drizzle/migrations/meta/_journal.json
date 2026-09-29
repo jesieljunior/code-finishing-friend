@@ -36,6 +36,13 @@
       "when": 1790036941354,
       "tag": "0004_restrict_support_direct_data_access",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790696955351,
+      "tag": "0005_prepare_mercado_pago_provider_transition",
+      "breakpoints": true
     }
   ]
 }
