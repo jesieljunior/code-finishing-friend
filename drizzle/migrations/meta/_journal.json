@@ -43,6 +43,20 @@
       "when": 1790696955351,
       "tag": "0005_prepare_mercado_pago_provider_transition",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790872095199,
+      "tag": "0006_harden_public_time_clock",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790872170831,
+      "tag": "0007_enforce_time_clock_sequence",
+      "breakpoints": true
     }
   ]
 }

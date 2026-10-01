@@ -139,6 +139,61 @@ export type Database = {
           },
         ]
       }
+      auditoria_ponto_publico: {
+        Row: {
+          acao: string
+          criado_em: string
+          detalhes: Json
+          empresa_id: string
+          escala_id: string | null
+          id: string
+          ponto_id: string | null
+          resultado: string
+        }
+        Insert: {
+          acao: string
+          criado_em?: string
+          detalhes?: Json
+          empresa_id: string
+          escala_id?: string | null
+          id?: string
+          ponto_id?: string | null
+          resultado: string
+        }
+        Update: {
+          acao?: string
+          criado_em?: string
+          detalhes?: Json
+          empresa_id?: string
+          escala_id?: string | null
+          id?: string
+          ponto_id?: string | null
+          resultado?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auditoria_ponto_publico_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auditoria_ponto_publico_escala_id_fkey"
+            columns: ["escala_id"]
+            isOneToOne: false
+            referencedRelation: "escalas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auditoria_ponto_publico_ponto_id_fkey"
+            columns: ["ponto_id"]
+            isOneToOne: false
+            referencedRelation: "pontos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           ativo: boolean
@@ -413,6 +468,7 @@ export type Database = {
           modelo_cobranca: Database["public"]["Enums"]["modelo_cobranca"]
           ocorrencias_habilitadas: boolean
           percentual_plataforma: number
+          selfie_retencao_dias: number
           substituicao_habilitada: boolean
           taxa_fixa_pix: number
         }
@@ -428,6 +484,7 @@ export type Database = {
           modelo_cobranca?: Database["public"]["Enums"]["modelo_cobranca"]
           ocorrencias_habilitadas?: boolean
           percentual_plataforma?: number
+          selfie_retencao_dias?: number
           substituicao_habilitada?: boolean
           taxa_fixa_pix?: number
         }
@@ -443,6 +500,7 @@ export type Database = {
           modelo_cobranca?: Database["public"]["Enums"]["modelo_cobranca"]
           ocorrencias_habilitadas?: boolean
           percentual_plataforma?: number
+          selfie_retencao_dias?: number
           substituicao_habilitada?: boolean
           taxa_fixa_pix?: number
         }
@@ -875,6 +933,8 @@ export type Database = {
           id: string
           local: string | null
           nome: string
+          qr_code_expira_em: string | null
+          qr_code_gerado_em: string
           qr_code_token: string
           status: Database["public"]["Enums"]["status_evento"]
         }
@@ -888,6 +948,8 @@ export type Database = {
           id?: string
           local?: string | null
           nome: string
+          qr_code_expira_em?: string | null
+          qr_code_gerado_em?: string
           qr_code_token?: string
           status?: Database["public"]["Enums"]["status_evento"]
         }
@@ -901,6 +963,8 @@ export type Database = {
           id?: string
           local?: string | null
           nome?: string
+          qr_code_expira_em?: string | null
+          qr_code_gerado_em?: string
           qr_code_token?: string
           status?: Database["public"]["Enums"]["status_evento"]
         }
@@ -1538,12 +1602,16 @@ export type Database = {
           criado_em: string
           device_hash: string | null
           escala_id: string
+          fora_horario: boolean
           foto_url: string | null
           gps_lat: number | null
           gps_lng: number | null
           id: string
           metodo: Database["public"]["Enums"]["metodo_check"]
+          motivo_recusa: string | null
           registrado_em: string
+          selfie_consentimento_aceito_em: string | null
+          selfie_expira_em: string | null
           status: Database["public"]["Enums"]["status_ponto"]
           tipo: Database["public"]["Enums"]["tipo_ponto"]
         }
@@ -1554,12 +1622,16 @@ export type Database = {
           criado_em?: string
           device_hash?: string | null
           escala_id: string
+          fora_horario?: boolean
           foto_url?: string | null
           gps_lat?: number | null
           gps_lng?: number | null
           id?: string
           metodo: Database["public"]["Enums"]["metodo_check"]
+          motivo_recusa?: string | null
           registrado_em?: string
+          selfie_consentimento_aceito_em?: string | null
+          selfie_expira_em?: string | null
           status?: Database["public"]["Enums"]["status_ponto"]
           tipo: Database["public"]["Enums"]["tipo_ponto"]
         }
@@ -1570,12 +1642,16 @@ export type Database = {
           criado_em?: string
           device_hash?: string | null
           escala_id?: string
+          fora_horario?: boolean
           foto_url?: string | null
           gps_lat?: number | null
           gps_lng?: number | null
           id?: string
           metodo?: Database["public"]["Enums"]["metodo_check"]
+          motivo_recusa?: string | null
           registrado_em?: string
+          selfie_consentimento_aceito_em?: string | null
+          selfie_expira_em?: string | null
           status?: Database["public"]["Enums"]["status_ponto"]
           tipo?: Database["public"]["Enums"]["tipo_ponto"]
         }
@@ -1666,6 +1742,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tentativas_ponto_publico: {
+        Row: {
+          acao: string
+          cpf_hash: string | null
+          criado_em: string
+          id: string
+          ip_hash: string
+          sucesso: boolean
+          token_hash: string
+        }
+        Insert: {
+          acao: string
+          cpf_hash?: string | null
+          criado_em?: string
+          id?: string
+          ip_hash: string
+          sucesso?: boolean
+          token_hash: string
+        }
+        Update: {
+          acao?: string
+          cpf_hash?: string | null
+          criado_em?: string
+          id?: string
+          ip_hash?: string
+          sucesso?: boolean
+          token_hash?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
