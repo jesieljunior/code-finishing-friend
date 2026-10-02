@@ -32,6 +32,7 @@ import { Route as AuthenticatedEventosEventoIdRouteImport } from './routes/_auth
 import { Route as AuthenticatedOperacaoIndexRouteImport } from './routes/_authenticated/operacao.index'
 import { Route as AuthenticatedOperacaoEventoIdRouteImport } from './routes/_authenticated/operacao.$eventoId'
 import { Route as ApiInternalProcessarPagamentosRouteImport } from './routes/api/internal/processar-pagamentos'
+import { Route as ApiInternalPurgarSelfiesPontoRouteImport } from './routes/api/internal/purgar-selfies-ponto'
 import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
 
 const IndexRoute = IndexRouteImport.update({
@@ -157,6 +158,12 @@ const ApiInternalProcessarPagamentosRoute =
     path: '/api/internal/processar-pagamentos',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiInternalPurgarSelfiesPontoRoute =
+  ApiInternalPurgarSelfiesPontoRouteImport.update({
+    id: '/api/internal/purgar-selfies-ponto',
+    path: '/api/internal/purgar-selfies-ponto',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
   id: '/api/public/webhooks/asaas',
   path: '/api/public/webhooks/asaas',
@@ -184,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/api/internal/processar-pagamentos': typeof ApiInternalProcessarPagamentosRoute
+  '/api/internal/purgar-selfies-ponto': typeof ApiInternalPurgarSelfiesPontoRoute
   '/eventos/': typeof AuthenticatedEventosIndexRoute
   '/operacao/': typeof AuthenticatedOperacaoIndexRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
@@ -209,6 +217,7 @@ export interface FileRoutesByTo {
   '/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/api/internal/processar-pagamentos': typeof ApiInternalProcessarPagamentosRoute
+  '/api/internal/purgar-selfies-ponto': typeof ApiInternalPurgarSelfiesPontoRoute
   '/eventos': typeof AuthenticatedEventosIndexRoute
   '/operacao': typeof AuthenticatedOperacaoIndexRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
@@ -236,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/eventos/$eventoId': typeof AuthenticatedEventosEventoIdRoute
   '/_authenticated/operacao/$eventoId': typeof AuthenticatedOperacaoEventoIdRoute
   '/api/internal/processar-pagamentos': typeof ApiInternalProcessarPagamentosRoute
+  '/api/internal/purgar-selfies-ponto': typeof ApiInternalPurgarSelfiesPontoRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
   '/_authenticated/operacao/': typeof AuthenticatedOperacaoIndexRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/eventos/$eventoId'
     | '/operacao/$eventoId'
     | '/api/internal/processar-pagamentos'
+    | '/api/internal/purgar-selfies-ponto'
     | '/eventos/'
     | '/operacao/'
     | '/api/public/webhooks/asaas'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/eventos/$eventoId'
     | '/operacao/$eventoId'
     | '/api/internal/processar-pagamentos'
+    | '/api/internal/purgar-selfies-ponto'
     | '/eventos'
     | '/operacao'
     | '/api/public/webhooks/asaas'
@@ -314,6 +326,7 @@ export interface FileRouteTypes {
     | '/_authenticated/eventos/$eventoId'
     | '/_authenticated/operacao/$eventoId'
     | '/api/internal/processar-pagamentos'
+    | '/api/internal/purgar-selfies-ponto'
     | '/_authenticated/eventos/'
     | '/_authenticated/operacao/'
     | '/api/public/webhooks/asaas'
@@ -325,6 +338,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PontoTokenRoute: typeof PontoTokenRoute
   ApiInternalProcessarPagamentosRoute: typeof ApiInternalProcessarPagamentosRoute
+  ApiInternalPurgarSelfiesPontoRoute: typeof ApiInternalPurgarSelfiesPontoRoute
   ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
 }
 
@@ -491,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInternalProcessarPagamentosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/internal/purgar-selfies-ponto': {
+      id: '/api/internal/purgar-selfies-ponto'
+      path: '/api/internal/purgar-selfies-ponto'
+      fullPath: '/api/internal/purgar-selfies-ponto'
+      preLoaderRoute: typeof ApiInternalPurgarSelfiesPontoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/asaas': {
       id: '/api/public/webhooks/asaas'
       path: '/api/public/webhooks/asaas'
@@ -552,6 +573,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PontoTokenRoute: PontoTokenRoute,
   ApiInternalProcessarPagamentosRoute: ApiInternalProcessarPagamentosRoute,
+  ApiInternalPurgarSelfiesPontoRoute: ApiInternalPurgarSelfiesPontoRoute,
   ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
 }
 export const routeTree = rootRouteImport
