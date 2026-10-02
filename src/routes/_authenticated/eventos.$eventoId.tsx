@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Ban, Plus, UserPlus } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowRight, Ban, Plus, RefreshCw, UserPlus } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ import {
   type TipoValor,
 } from "@/lib/dominio";
 import { parseValorPositivo } from "@/lib/moeda";
+import { rotacionarQrEvento } from "@/lib/operacao.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/eventos/$eventoId")({
@@ -335,6 +337,7 @@ function DetalheEvento() {
     valor: number;
     tipo: TipoValor;
   } | null>(null);
+  const rotacionarFn = useServerFn(rotacionarQrEvento);
 
   const mudarStatus = useMutation({
     mutationFn: async (novo: StatusEvento) => {
@@ -376,6 +379,16 @@ function DetalheEvento() {
       queryClient.invalidateQueries({ queryKey: ["equipes", eventoId] });
     },
     onError: (e: Error) => toast.error(e.message),
+  });
+
+  const rotacionarQr = useMutation({
+    mutationFn: () => rotacionarFn({ data: { eventoId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["evento", eventoId] });
+      queryClient.invalidateQueries({ queryKey: ["painel"] });
+      toast.success("Novo QR Code gerado. O código anterior deixou de funcionar.");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 
   if (evento.isPending) {
@@ -547,6 +560,11 @@ function DetalheEvento() {
                 informando o CPF.
               </p>
               <p className="mt-2 break-all text-xs text-muted-foreground">{urlPonto}</p>
+              {e.qr_code_expira_em ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Válido até {dataHora(e.qr_code_expira_em)}.
+                </p>
+              ) : null}
               <div className="mt-3 flex gap-2">
                 <Button
                   size="sm"
@@ -562,6 +580,14 @@ function DetalheEvento() {
                   <Link to="/operacao/$eventoId" params={{ eventoId }}>
                     Painel de operação
                   </Link>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={rotacionarQr.isPending}
+                  onClick={() => rotacionarQr.mutate()}
+                >
+                  <RefreshCw className="size-4" /> Trocar QR
                 </Button>
               </div>
             </div>

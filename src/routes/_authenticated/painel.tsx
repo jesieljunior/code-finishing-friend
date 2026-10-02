@@ -30,10 +30,11 @@ export const Route = createFileRoute("/_authenticated/painel")({
 });
 
 async function carregar(empresaId: string) {
-  const [eventos, pontos, fechamentos, pagamentos] = await Promise.all([
+  const emTresDias = new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString();
+  const [eventos, pontos, foraHorario, selfiesExpirando, fechamentos, pagamentos] = await Promise.all([
     supabase
       .from("eventos")
-      .select("id, nome, local, data_inicio, status")
+      .select("id, nome, local, data_inicio, status, qr_code_expira_em")
       .eq("empresa_id", empresaId)
       .not("status", "in", "(concluido,arquivado,cancelado)")
       .order("data_inicio", { ascending: true })
@@ -45,6 +46,19 @@ async function carregar(empresaId: string) {
         head: true,
       })
       .eq("status", "pendente")
+      .eq("escalas.equipes.eventos.empresa_id", empresaId),
+    supabase
+      .from("pontos")
+      .select("id, escalas!inner(equipes!inner(eventos!inner(empresa_id)))", { count: "exact", head: true })
+      .eq("status", "pendente")
+      .eq("fora_horario", true)
+      .eq("escalas.equipes.eventos.empresa_id", empresaId),
+    supabase
+      .from("pontos")
+      .select("id, escalas!inner(equipes!inner(eventos!inner(empresa_id)))", { count: "exact", head: true })
+      .not("foto_url", "is", null)
+      .lte("selfie_expira_em", emTresDias)
+      .gte("selfie_expira_em", new Date().toISOString())
       .eq("escalas.equipes.eventos.empresa_id", empresaId),
     supabase
       .from("fechamentos")
@@ -73,6 +87,8 @@ async function carregar(empresaId: string) {
   return {
     eventos: eventos.data ?? [],
     pontosPendentes: pontos.count ?? 0,
+    pontosForaHorario: foraHorario.count ?? 0,
+    selfiesExpirando: selfiesExpirando.count ?? 0,
     fechamentosPendentes: fechamentos.count ?? 0,
     aPagar,
     pago,
@@ -135,6 +151,23 @@ function Painel() {
             />
             <Cartao titulo="A pagar" valor={moeda(q.data.aPagar)} to="/financeiro" />
           </div>
+
+          {q.data.pontosForaHorario > 0 || q.data.selfiesExpirando > 0 ? (
+            <section className="mt-4 grid gap-3 sm:grid-cols-2">
+              {q.data.pontosForaHorario > 0 ? (
+                <Link to="/operacao" className="rounded-md border border-status-pendente bg-status-pendente p-3 text-status-pendente-foreground">
+                  <p className="text-sm font-semibold">{q.data.pontosForaHorario} ponto(s) fora do horário</p>
+                  <p className="text-xs">A supervisão precisa avaliar estes registros.</p>
+                </Link>
+              ) : null}
+              {q.data.selfiesExpirando > 0 ? (
+                <Link to="/operacao" className="rounded-md border border-border bg-card p-3">
+                  <p className="text-sm font-semibold">{q.data.selfiesExpirando} selfie(s) expiram em até 3 dias</p>
+                  <p className="text-xs text-muted-foreground">Baixe alguma evidência necessária antes da exclusão.</p>
+                </Link>
+              ) : null}
+            </section>
+          ) : null}
 
           <section className="mt-6 rounded-md border border-border bg-card">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
