@@ -169,6 +169,32 @@ function Configuracoes() {
         </ul>
       ) : null}
 
+      {q.data ? (
+        <section className="mt-4 max-w-2xl rounded-md border border-border bg-card p-4">
+          <Label htmlFor="selfie-retencao">Retenção das selfies (dias)</Label>
+          <p className="mb-2 text-xs text-muted-foreground">
+            As evidências são excluídas automaticamente após este prazo. O painel avisa nos três dias anteriores.
+          </p>
+          <Input
+            id="selfie-retencao"
+            type="number"
+            min={30}
+            max={365}
+            className="w-28"
+            defaultValue={q.data.selfie_retencao_dias}
+            onBlur={(event) => {
+              const dias = Number(event.currentTarget.value);
+              if (!Number.isInteger(dias) || dias < 30 || dias > 365) {
+                toast.error("Informe um prazo entre 30 e 365 dias.");
+                event.currentTarget.value = String(q.data?.selfie_retencao_dias ?? 90);
+                return;
+              }
+              if (dias !== q.data?.selfie_retencao_dias) salvar.mutate({ selfie_retencao_dias: dias });
+            }}
+          />
+        </section>
+      ) : null}
+
       {plano.data ? <PlanoCobranca plano={plano.data} /> : null}
       {empresa.data ? <CadastroFiscal empresa={empresa.data} /> : null}
     </AppShell>

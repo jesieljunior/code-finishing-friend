@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
-import { createServerFn, getRequestHeader } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/start-server-core";
 import { z } from "zod";
 
 const tokenSchema = z.object({ token: z.string().min(8).max(128) });
@@ -87,7 +88,7 @@ export const obterContextoPonto = createServerFn({ method: "GET" })
 
     const { data: config } = await supabaseAdmin
       .from("configuracoes")
-      .select("checkin_exige_selfie, checkin_exige_gps")
+      .select("checkin_exige_selfie, checkin_exige_gps, selfie_retencao_dias")
       .eq("empresa_id", evento.empresa_id)
       .maybeSingle();
 
@@ -243,8 +244,9 @@ export const registrarPonto = createServerFn({ method: "POST" })
 
     const agora = new Date();
     const foraHorario = Boolean(evento.data_fim && agora > new Date(evento.data_fim));
+    const retencaoDias = config?.selfie_retencao_dias ?? 90;
     const selfieExpiraEm = data.fotoBase64
-      ? new Date(agora.getTime() + 90 * 24 * 60 * 60_000).toISOString()
+      ? new Date(agora.getTime() + retencaoDias * 24 * 60 * 60_000).toISOString()
       : null;
     const { data: ponto, error } = await supabaseAdmin.from("pontos").insert({
       escala_id: escala.id,

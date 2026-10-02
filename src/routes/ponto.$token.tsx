@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { LoadingBloco } from "@/components/states";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/status-badge";
@@ -54,8 +55,9 @@ function PaginaPonto() {
     escalaId: string;
     nome: string;
     statusEscala: string;
-    pontos: { id: string; tipo: string; registrado_em: string; status: string }[];
+    pontos: { id: string; tipo: string; registrado_em: string; status: string; fora_horario: boolean }[];
   } | null>(null);
+  const [consentiuSelfie, setConsentiuSelfie] = useState(false);
 
   const obterCtx = useServerFn(obterContextoPonto);
   const identificarFn = useServerFn(identificarNoPonto);
@@ -88,6 +90,9 @@ function PaginaPonto() {
       if (!identificado) throw new Error("Identifique-se novamente para registrar o ponto.");
       let fotoBase64: string | null = null;
       if (contexto.data?.exigeSelfie) {
+        if (!consentiuSelfie) {
+          throw new Error("Autorize o uso da selfie para conferência do ponto.");
+        }
         fotoBase64 = await tirarSelfie();
       }
       let lat: number | null = null;
@@ -110,11 +115,16 @@ function PaginaPonto() {
           fotoBase64,
           lat,
           lng,
+          consentiuSelfie,
         },
       });
     },
-    onSuccess: () => {
-      toast.success("Ponto registrado. Aguarde a aprovação do supervisor.");
+    onSuccess: (resultado) => {
+      toast.success(
+        resultado.foraHorario
+          ? "Ponto registrado fora do horário e enviado para avaliação do supervisor."
+          : "Ponto registrado. Aguarde a aprovação do supervisor.",
+      );
       identificar.mutate();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -140,7 +150,8 @@ function PaginaPonto() {
   }
 
   const ctx = contexto.data;
-  const registrados = new Set(identificado?.pontos.map((p) => p.tipo) ?? []);
+  const validos = identificado?.pontos.filter((p) => p.status !== "recusado") ?? [];
+  const proximoTipo = SEQUENCIA[validos.length] ?? null;
 
   return (
     <main className="mx-auto max-w-md space-y-4 p-4">
@@ -150,6 +161,11 @@ function PaginaPonto() {
           {dataHora(ctx.evento.data_inicio)}
           {ctx.evento.local ? ` · ${ctx.evento.local}` : ""}
         </p>
+        {ctx.evento.qr_code_expira_em ? (
+          <p className="mt-1 text-xs text-muted-foreground">
+            QR válido até {dataHora(ctx.evento.qr_code_expira_em)}.
+          </p>
+        ) : null}
       </header>
 
       {!identificado ? (
@@ -204,18 +220,32 @@ function PaginaPonto() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
-              {SEQUENCIA.map((tipo) => (
-                <Button
-                  key={tipo}
-                  variant={registrados.has(tipo) ? "outline" : "default"}
-                  className="h-16"
-                  disabled={registrar.isPending}
-                  onClick={() => registrar.mutate(tipo)}
-                >
-                  {ROTULO_TIPO_PONTO[tipo]}
-                </Button>
-              ))}
+            <div className="space-y-3">
+              {ctx.exigeSelfie ? (
+                <label className="flex items-start gap-2 rounded-md border border-border bg-card p-3 text-xs text-muted-foreground">
+                  <Checkbox
+                    checked={consentiuSelfie}
+                    onCheckedChange={(checked) => setConsentiuSelfie(checked === true)}
+                    aria-label="Autorizar uso da selfie"
+                  />
+                  <span>
+                    Autorizo a selfie para conferência deste ponto. A supervisão poderá baixá-la, e ela será excluída após 90 dias.
+                  </span>
+                </label>
+              ) : null}
+              <div className="grid grid-cols-2 gap-2">
+                {SEQUENCIA.map((tipo) => (
+                  <Button
+                    key={tipo}
+                    variant={tipo === proximoTipo ? "default" : "outline"}
+                    className="h-16"
+                    disabled={registrar.isPending || tipo !== proximoTipo || (ctx.exigeSelfie && !consentiuSelfie)}
+                    onClick={() => registrar.mutate(tipo)}
+                  >
+                    {ROTULO_TIPO_PONTO[tipo]}
+                  </Button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -236,6 +266,11 @@ function PaginaPonto() {
                   >
                     <span>{ROTULO_TIPO_PONTO[p.tipo as TipoPonto]}</span>
                     <span className="flex items-center gap-2 text-muted-foreground">
+                      {p.fora_horario ? (
+                        <span className="rounded-sm bg-status-pendente px-1.5 py-0.5 text-status-pendente-foreground">
+                          Fora do horário
+                        </span>
+                      ) : null}
                       {hora(p.registrado_em)}
                       <StatusBadge status={p.status} />
                     </span>
@@ -250,7 +285,7 @@ function PaginaPonto() {
   );
 }
 
-/** Captura uma selfie após dois piscamentos detectados pela câmera frontal. */
+/** Captura uma selfie para revisão humana da supervisão. */
 async function tirarSelfie(): Promise<string> {
   if (!window.isSecureContext) {
     throw new Error("A câmera só funciona em uma conexão segura (HTTPS).");
@@ -293,7 +328,7 @@ async function tirarSelfie(): Promise<string> {
     borderRadius: "12px",
     background: "#111",
   });
-  aviso.textContent = "Olhe para a câmera e pisque duas vezes";
+  aviso.textContent = "Olhe para a câmera. A foto será tirada em 3 segundos";
   Object.assign(aviso.style, {
     position: "fixed",
     left: "50%",
@@ -320,57 +355,15 @@ async function tirarSelfie(): Promise<string> {
     });
     await video.play();
 
-    aviso.textContent = "Preparando a prova de vida…";
-    const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
-    const vision = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm",
-    );
-    const landmarker = await FaceLandmarker.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath: "/mediapipe/face_landmarker.task",
-      },
-      runningMode: "VIDEO",
-      numFaces: 1,
-      outputFaceBlendshapes: true,
-    });
-
-    aviso.textContent = "Olhe para a câmera e pisque duas vezes";
-    return await new Promise<string>((resolve, reject) => {
-      const inicio = performance.now();
-      let olhosFechados = false;
-      let piscadas = 0;
-      let ultimoTempo = -1;
-
-      const verificar = () => {
-        if (performance.now() - inicio > 15_000) {
-          reject(new Error("Não detectamos dois piscamentos. Tente novamente olhando para a câmera."));
-          return;
-        }
-        const resultado = landmarker.detectForVideo(video, performance.now());
-        const categorias = resultado.faceBlendshapes?.[0]?.categories ?? [];
-        const esquerdo = categorias.find((item) => item.categoryName === "eyeBlinkLeft")?.score ?? 0;
-        const direito = categorias.find((item) => item.categoryName === "eyeBlinkRight")?.score ?? 0;
-        const fechado = (esquerdo + direito) / 2 > 0.55;
-        if (fechado) olhosFechados = true;
-        if (olhosFechados && !fechado && performance.now() - ultimoTempo > 250) {
-          piscadas += 1;
-          ultimoTempo = performance.now();
-          olhosFechados = false;
-          aviso.textContent = `Piscamentos detectados: ${piscadas}/2`;
-        }
-        if (piscadas >= 2 && !fechado) {
-          const canvas = document.createElement("canvas");
-          canvas.width = video.videoWidth || 640;
-          canvas.height = video.videoHeight || 480;
-          canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
-          landmarker.close();
-          resolve(canvas.toDataURL("image/jpeg", 0.7));
-          return;
-        }
-        requestAnimationFrame(verificar);
-      };
-      requestAnimationFrame(verificar);
-    });
+    for (let segundos = 3; segundos > 0; segundos -= 1) {
+      aviso.textContent = `Olhe para a câmera. Foto em ${segundos}…`;
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.7);
   } finally {
     video.remove();
     aviso.remove();
