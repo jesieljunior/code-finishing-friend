@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, Image, Plus, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -26,6 +27,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/use-sessao";
+import {
+  decidirPonto as decidirPontoSeguro,
+  lancarPontoManual,
+} from "@/lib/operacao.functions";
 import {
   hora,
   ROTULO_METODO,
@@ -64,9 +69,11 @@ function OperacaoEvento() {
     registradoEm: string;
   } | null>(null);
   const [manual, setManual] = useState<{ escalaId: string; nome: string } | null>(null);
+  const [recusando, setRecusando] = useState<{ pontoId: string; escalaId: string } | null>(null);
   const [ocorrencia, setOcorrencia] = useState<{ escalaId: string; nome: string } | null>(
     null,
   );
+  const decidirFn = useServerFn(decidirPontoSeguro);
 
   const evento = useQuery({
     queryKey: ["evento", eventoId],
@@ -88,7 +95,7 @@ function OperacaoEvento() {
       const { data, error } = await supabase
         .from("equipes")
         .select(
-          "id, nome, escalas(id, status, freelancers(nome, funcao), pontos(id, tipo, metodo, registrado_em, status, foto_url), ocorrencias(id, descricao, criado_em))",
+          "id, nome, escalas(id, status, freelancers(nome, funcao), pontos(id, tipo, metodo, registrado_em, status, foto_url, gps_lat, gps_lng, fora_horario, motivo_recusa, selfie_expira_em), ocorrencias(id, descricao, criado_em))",
         )
         .eq("evento_id", eventoId)
         .order("criado_em");
@@ -104,23 +111,23 @@ function OperacaoEvento() {
 
   const decidirPonto = useMutation({
     mutationFn: async ({
-      id,
+      pontoId,
+      escalaId,
       status,
+      motivo,
     }: {
-      id: string;
+      pontoId: string;
+      escalaId: string;
       status: "aprovado" | "recusado";
+      motivo?: string;
     }) => {
-      const { error } = await supabase
-        .from("pontos")
-        .update({
-          status,
-          aprovado_por_id: sessao?.usuario.id ?? null,
-          aprovado_em: new Date().toISOString(),
-        })
-        .eq("id", id);
-      if (error) throw error;
+      await decidirFn({ data: { pontoId, escalaId, status, motivo } });
     },
-    onSuccess: invalidar,
+    onSuccess: () => {
+      invalidar();
+      setRecusando(null);
+      toast.success("Decisão registrada no histórico.");
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -237,6 +244,24 @@ function OperacaoEvento() {
                                   <span className="font-normal text-muted-foreground">
                                     {hora(p.registrado_em)} · {ROTULO_METODO[p.metodo]}
                                   </span>
+                                  {p.fora_horario ? (
+                                    <span className="ml-1 rounded-sm bg-status-pendente px-1.5 py-0.5 text-status-pendente-foreground">
+                                      Fora do horário
+                                    </span>
+                                  ) : null}
+                                  {p.gps_lat != null && p.gps_lng != null ? (
+                                    <a
+                                      className="ml-1 text-primary underline"
+                                      href={`https://www.google.com/maps?q=${p.gps_lat},${p.gps_lng}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      Ver localização
+                                    </a>
+                                  ) : null}
+                                  {p.motivo_recusa ? (
+                                    <span className="block font-normal text-destructive">Motivo: {p.motivo_recusa}</span>
+                                  ) : null}
                                 </span>
                                 <span className="flex items-center gap-1.5">
                                   <StatusBadge status={p.status} />
@@ -265,7 +290,8 @@ function OperacaoEvento() {
                                         className="h-7"
                                         onClick={() =>
                                           decidirPonto.mutate({
-                                            id: p.id,
+                                            pontoId: p.id,
+                                            escalaId: es.id,
                                             status: "aprovado",
                                           })
                                         }
@@ -276,12 +302,8 @@ function OperacaoEvento() {
                                         size="sm"
                                         variant="ghost"
                                         className="h-7"
-                                        onClick={() =>
-                                          decidirPonto.mutate({
-                                            id: p.id,
-                                            status: "recusado",
-                                          })
-                                        }
+                                        title="Recusar ponto"
+                                        onClick={() => setRecusando({ pontoId: p.id, escalaId: es.id })}
                                       >
                                         <X className="size-3.5" />
                                       </Button>
@@ -332,6 +354,19 @@ function OperacaoEvento() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={Boolean(recusando)} onOpenChange={(o) => !o && setRecusando(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Recusar ponto</DialogTitle></DialogHeader>
+          {recusando ? (
+            <FormRecusa
+              onCancelar={() => setRecusando(null)}
+              onConfirmar={(motivo) => decidirPonto.mutate({ ...recusando, status: "recusado", motivo })}
+              salvando={decidirPonto.isPending}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={Boolean(ocorrencia)} onOpenChange={(o) => !o && setOcorrencia(null)}>
         <DialogContent>
           <DialogHeader>
@@ -364,6 +399,9 @@ function OperacaoEvento() {
                 Registrada em {new Date(fotoAberta.registradoEm).toLocaleString("pt-BR")}.
                 A foto é evidência do ponto e não compõe o cálculo da folha.
               </p>
+              <Button asChild variant="outline">
+                <a href={fotoAberta.url} download>Baixar evidência</a>
+              </Button>
             </div>
           ) : null}
         </DialogContent>
@@ -381,6 +419,7 @@ function FormPontoManual({
   onFechar: () => void;
   onSalvo: () => void;
 }) {
+  const lancarFn = useServerFn(lancarPontoManual);
   const [tipo, setTipo] = useState<TipoPonto>("entrada");
   const [quando, setQuando] = useState(() =>
     new Date(Date.now() - new Date().getTimezoneOffset() * 60_000)
@@ -390,15 +429,7 @@ function FormPontoManual({
 
   const salvar = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("pontos").insert({
-        escala_id: escalaId,
-        tipo,
-        metodo: "manual",
-        registrado_em: new Date(quando).toISOString(),
-        status: "aprovado",
-        aprovado_em: new Date().toISOString(),
-      });
-      if (error) throw error;
+      await lancarFn({ data: { escalaId, tipo, registradoEm: new Date(quando).toISOString() } });
     },
     onSuccess: () => {
       toast.success("Ponto lançado.");
@@ -449,6 +480,37 @@ function FormPontoManual({
         <Button type="submit" disabled={salvar.isPending}>
           Lançar ponto
         </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+function FormRecusa({
+  onCancelar,
+  onConfirmar,
+  salvando,
+}: {
+  onCancelar: () => void;
+  onConfirmar: (motivo: string) => void;
+  salvando: boolean;
+}) {
+  const [motivo, setMotivo] = useState("");
+  return (
+    <form
+      className="space-y-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!motivo.trim()) return;
+        onConfirmar(motivo.trim());
+      }}
+    >
+      <div className="space-y-1.5">
+        <Label htmlFor="motivo-recusa">Motivo da recusa</Label>
+        <Textarea id="motivo-recusa" required maxLength={500} value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancelar}>Cancelar</Button>
+        <Button type="submit" variant="destructive" disabled={salvando || !motivo.trim()}>Recusar ponto</Button>
       </DialogFooter>
     </form>
   );

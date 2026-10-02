@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
-import { createServerFn, getRequestHeader } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/start-server-core";
 import { z } from "zod";
 
 const tokenSchema = z.object({ token: z.string().min(8).max(128) });

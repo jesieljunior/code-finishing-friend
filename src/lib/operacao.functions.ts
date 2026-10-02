@@ -38,7 +38,7 @@ export const decidirPonto = createServerFn({ method: "POST" })
       .from("pontos")
       .update({
         status: data.status,
-        motivo_recusa: data.status === "recusado" ? data.motivo : null,
+        motivo_recusa: data.status === "recusado" ? (data.motivo ?? null) : null,
         aprovado_por_id: context.userId,
         aprovado_em: new Date().toISOString(),
       })
