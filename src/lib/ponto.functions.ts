@@ -207,7 +207,7 @@ export const registrarPonto = createServerFn({ method: "POST" })
 
     const { data: config } = await supabaseAdmin
       .from("configuracoes")
-      .select("checkin_exige_selfie, checkin_exige_gps")
+      .select("checkin_exige_selfie, checkin_exige_gps, selfie_retencao_dias")
       .eq("empresa_id", evento.empresa_id)
       .maybeSingle();
 

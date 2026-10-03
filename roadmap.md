@@ -12,7 +12,8 @@
 - [ ] Review and remove obsolete or excessive test-account privileges before issuing final credentials
 - [ ] Fix cross-organization data isolation and verify every agency-facing read/write path
 - [x] Fix freelancer/employee registration validation for Frela and CLT
-- [ ] Repair and validate liveness/selfie check-in end to end
+- [x] Harden selfie check-in with consent, retention, expiry warnings, download, and supervisor review
+- [x] Enforce QR expiry, rate limits, ordered time-clock records, out-of-hours review, GPS display, and audited decisions
 - [ ] Repair Pix payouts to freelancers and expose actionable failure reasons
 - [ ] Audit the agile-workflow feature and close other critical end-to-end gaps
 - [x] Correct daily-rate propagation from event scale through closing and finance, including warnings and correction flow
