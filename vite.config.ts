@@ -12,9 +12,4 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  vite: {
-    optimizeDeps: {
-      exclude: ["react", "react-dom", "react-dom/client", "@tanstack/react-query"],
-    },
-  },
 });
