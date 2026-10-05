@@ -17,14 +17,4 @@ export default defineConfig({
       exclude: ["react", "react-dom", "react-dom/client", "@tanstack/react-query"],
     },
   },
-}).then((config) => {
-  config.optimizeDeps ??= {};
-  config.optimizeDeps.exclude = [
-    ...(config.optimizeDeps.exclude ?? []),
-    "react",
-    "react-dom",
-    "react-dom/client",
-    "@tanstack/react-query",
-  ];
-  return config;
 });
