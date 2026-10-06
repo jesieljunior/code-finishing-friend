@@ -79,6 +79,7 @@ export type Database = {
           cupom_id: string | null
           empresa_id: string
           id: string
+          inicio_ciclo: string
           mensalidade_override: number | null
           observacoes: string | null
           percentual_override: number | null
@@ -93,6 +94,7 @@ export type Database = {
           cupom_id?: string | null
           empresa_id: string
           id?: string
+          inicio_ciclo?: string
           mensalidade_override?: number | null
           observacoes?: string | null
           percentual_override?: number | null
@@ -107,6 +109,7 @@ export type Database = {
           cupom_id?: string | null
           empresa_id?: string
           id?: string
+          inicio_ciclo?: string
           mensalidade_override?: number | null
           observacoes?: string | null
           percentual_override?: number | null
@@ -133,6 +136,55 @@ export type Database = {
           {
             foreignKeyName: "assinaturas_plano_id_fkey"
             columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assinaturas_historico: {
+        Row: {
+          alterado_por: string | null
+          criado_em: string
+          empresa_id: string
+          id: string
+          plano_anterior_id: string | null
+          plano_novo_id: string | null
+        }
+        Insert: {
+          alterado_por?: string | null
+          criado_em?: string
+          empresa_id: string
+          id?: string
+          plano_anterior_id?: string | null
+          plano_novo_id?: string | null
+        }
+        Update: {
+          alterado_por?: string | null
+          criado_em?: string
+          empresa_id?: string
+          id?: string
+          plano_anterior_id?: string | null
+          plano_novo_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assinaturas_historico_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_historico_plano_anterior_id_fkey"
+            columns: ["plano_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_historico_plano_novo_id_fkey"
+            columns: ["plano_novo_id"]
             isOneToOne: false
             referencedRelation: "planos"
             referencedColumns: ["id"]
@@ -614,6 +666,67 @@ export type Database = {
           },
         ]
       }
+      custos_meio_pagamento: {
+        Row: {
+          cobranca_id: string | null
+          criado_em: string
+          custo: number
+          empresa_id: string
+          fatura_id: string | null
+          id: string
+          metodo: string
+          taxa_aplicada: number
+          valor_cobrado: number
+          valor_liquido: number
+        }
+        Insert: {
+          cobranca_id?: string | null
+          criado_em?: string
+          custo: number
+          empresa_id: string
+          fatura_id?: string | null
+          id?: string
+          metodo: string
+          taxa_aplicada: number
+          valor_cobrado: number
+          valor_liquido: number
+        }
+        Update: {
+          cobranca_id?: string | null
+          criado_em?: string
+          custo?: number
+          empresa_id?: string
+          fatura_id?: string | null
+          id?: string
+          metodo?: string
+          taxa_aplicada?: number
+          valor_cobrado?: number
+          valor_liquido?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custos_meio_pagamento_cobranca_id_fkey"
+            columns: ["cobranca_id"]
+            isOneToOne: false
+            referencedRelation: "cobrancas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custos_meio_pagamento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custos_meio_pagamento_fatura_id_fkey"
+            columns: ["fatura_id"]
+            isOneToOne: false
+            referencedRelation: "faturas_plataforma"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documentos_fiscais: {
         Row: {
           arquivo_caminho: string | null
@@ -981,6 +1094,106 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faturas_plataforma: {
+        Row: {
+          assinatura_id: string | null
+          atualizado_em: string
+          ciclo_fim: string
+          ciclo_inicio: string
+          clt_ativos: number
+          criado_em: string
+          desconto: number
+          empresa_id: string
+          id: string
+          mensalidade: number
+          pago_em: string | null
+          participacoes_excedentes: number
+          participacoes_incluidas: number
+          participacoes_usadas: number
+          plano_id: string | null
+          plano_nome: string
+          provedor: string | null
+          referencia_provedor: string | null
+          status: string
+          total: number
+          valor_excedente_total: number
+          valor_excedente_unit: number
+          vencimento: string
+        }
+        Insert: {
+          assinatura_id?: string | null
+          atualizado_em?: string
+          ciclo_fim: string
+          ciclo_inicio: string
+          clt_ativos?: number
+          criado_em?: string
+          desconto?: number
+          empresa_id: string
+          id?: string
+          mensalidade: number
+          pago_em?: string | null
+          participacoes_excedentes: number
+          participacoes_incluidas: number
+          participacoes_usadas: number
+          plano_id?: string | null
+          plano_nome: string
+          provedor?: string | null
+          referencia_provedor?: string | null
+          status?: string
+          total: number
+          valor_excedente_total: number
+          valor_excedente_unit: number
+          vencimento: string
+        }
+        Update: {
+          assinatura_id?: string | null
+          atualizado_em?: string
+          ciclo_fim?: string
+          ciclo_inicio?: string
+          clt_ativos?: number
+          criado_em?: string
+          desconto?: number
+          empresa_id?: string
+          id?: string
+          mensalidade?: number
+          pago_em?: string | null
+          participacoes_excedentes?: number
+          participacoes_incluidas?: number
+          participacoes_usadas?: number
+          plano_id?: string | null
+          plano_nome?: string
+          provedor?: string | null
+          referencia_provedor?: string | null
+          status?: string
+          total?: number
+          valor_excedente_total?: number
+          valor_excedente_unit?: number
+          vencimento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faturas_plataforma_assinatura_id_fkey"
+            columns: ["assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "assinaturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_plataforma_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faturas_plataforma_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
             referencedColumns: ["id"]
           },
         ]
@@ -1528,50 +1741,173 @@ export type Database = {
           },
         ]
       }
+      participacoes_operacionais: {
+        Row: {
+          ativa: boolean
+          atualizado_em: string
+          data_evento: string
+          desativada_em: string | null
+          empresa_id: string
+          evento_id: string
+          freelancer_id: string
+          id: string
+          primeira_confirmacao_em: string
+        }
+        Insert: {
+          ativa?: boolean
+          atualizado_em?: string
+          data_evento: string
+          desativada_em?: string | null
+          empresa_id: string
+          evento_id: string
+          freelancer_id: string
+          id?: string
+          primeira_confirmacao_em?: string
+        }
+        Update: {
+          ativa?: boolean
+          atualizado_em?: string
+          data_evento?: string
+          desativada_em?: string | null
+          empresa_id?: string
+          evento_id?: string
+          freelancer_id?: string
+          id?: string
+          primeira_confirmacao_em?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participacoes_operacionais_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participacoes_operacionais_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participacoes_operacionais_freelancer_id_fkey"
+            columns: ["freelancer_id"]
+            isOneToOne: false
+            referencedRelation: "freelancers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planos: {
         Row: {
           ativo: boolean
           atualizado_em: string
+          aviso_vendas_acima: number | null
+          codigo: string | null
           criado_em: string
           descricao: string | null
           dias_trial: number
           id: string
+          limite_clt: number | null
+          limite_eventos_ciclo: number | null
+          limite_pessoas_evento: number | null
+          limite_supervisores: number | null
           mensalidade: number
           modelo: Database["public"]["Enums"]["modelo_cobranca"]
           nome: string
           ordem: number
+          participacoes_incluidas: number
           percentual: number
+          recursos: Json
+          retencao_evidencias_dias: number | null
           taxa_fixa_pix: number
+          valor_excedente: number
         }
         Insert: {
           ativo?: boolean
           atualizado_em?: string
+          aviso_vendas_acima?: number | null
+          codigo?: string | null
           criado_em?: string
           descricao?: string | null
           dias_trial?: number
           id?: string
+          limite_clt?: number | null
+          limite_eventos_ciclo?: number | null
+          limite_pessoas_evento?: number | null
+          limite_supervisores?: number | null
           mensalidade?: number
           modelo?: Database["public"]["Enums"]["modelo_cobranca"]
           nome: string
           ordem?: number
+          participacoes_incluidas?: number
           percentual?: number
+          recursos?: Json
+          retencao_evidencias_dias?: number | null
           taxa_fixa_pix?: number
+          valor_excedente?: number
         }
         Update: {
           ativo?: boolean
           atualizado_em?: string
+          aviso_vendas_acima?: number | null
+          codigo?: string | null
           criado_em?: string
           descricao?: string | null
           dias_trial?: number
           id?: string
+          limite_clt?: number | null
+          limite_eventos_ciclo?: number | null
+          limite_pessoas_evento?: number | null
+          limite_supervisores?: number | null
           mensalidade?: number
           modelo?: Database["public"]["Enums"]["modelo_cobranca"]
           nome?: string
           ordem?: number
+          participacoes_incluidas?: number
           percentual?: number
+          recursos?: Json
+          retencao_evidencias_dias?: number | null
           taxa_fixa_pix?: number
+          valor_excedente?: number
         }
         Relationships: []
+      }
+      planos_historico: {
+        Row: {
+          alterado_por: string | null
+          antes: Json
+          criado_em: string
+          depois: Json
+          id: string
+          plano_id: string
+        }
+        Insert: {
+          alterado_por?: string | null
+          antes: Json
+          criado_em?: string
+          depois: Json
+          id?: string
+          plano_id: string
+        }
+        Update: {
+          alterado_por?: string | null
+          antes?: Json
+          criado_em?: string
+          depois?: Json
+          id?: string
+          plano_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planos_historico_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plataforma_usuarios: {
         Row: {
@@ -1671,6 +2007,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      taxas_meio_pagamento: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          id: string
+          metodo: string
+          rotulo: string
+          taxa: number
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          id?: string
+          metodo: string
+          rotulo: string
+          taxa: number
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          id?: string
+          metodo?: string
+          rotulo?: string
+          taxa?: number
+        }
+        Relationships: []
       }
       taxas_plataforma: {
         Row: {
@@ -1870,6 +2233,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ciclo_da_empresa: {
+        Args: { _empresa_id: string; _ref?: string }
+        Returns: {
+          fim: string
+          inicio: string
+        }[]
+      }
+      contar_clt_ativos: { Args: { _empresa_id: string }; Returns: number }
+      contar_eventos_ciclo: {
+        Args: { _empresa_id: string; _ref?: string }
+        Returns: number
+      }
+      contar_participacoes_ciclo: {
+        Args: { _empresa_id: string; _ref?: string }
+        Returns: number
+      }
       criar_empresa: { Args: { _cnpj: string; _nome: string }; Returns: string }
       eh_equipe_plataforma: { Args: never; Returns: boolean }
       empresa_atual: { Args: never; Returns: string }
@@ -1883,12 +2262,49 @@ export type Database = {
         Args: { _empresa_id: string }
         Returns: boolean
       }
+      fechar_fatura_ciclo: {
+        Args: { _empresa_id: string; _ref: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["papel_usuario"]
           _user_id: string
         }
         Returns: boolean
+      }
+      plano_da_empresa: {
+        Args: { _empresa_id: string }
+        Returns: {
+          ativo: boolean
+          atualizado_em: string
+          aviso_vendas_acima: number | null
+          codigo: string | null
+          criado_em: string
+          descricao: string | null
+          dias_trial: number
+          id: string
+          limite_clt: number | null
+          limite_eventos_ciclo: number | null
+          limite_pessoas_evento: number | null
+          limite_supervisores: number | null
+          mensalidade: number
+          modelo: Database["public"]["Enums"]["modelo_cobranca"]
+          nome: string
+          ordem: number
+          participacoes_incluidas: number
+          percentual: number
+          recursos: Json
+          retencao_evidencias_dias: number | null
+          taxa_fixa_pix: number
+          valor_excedente: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "planos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       preco_efetivo: {
         Args: { _empresa_id: string }
@@ -1904,7 +2320,39 @@ export type Database = {
           trial_ate: string
         }[]
       }
+      recurso_habilitado: {
+        Args: { _empresa_id: string; _recurso: string }
+        Returns: boolean
+      }
+      resumo_uso_empresa: {
+        Args: { _empresa_id: string }
+        Returns: {
+          aviso_vendas: boolean
+          ciclo_fim: string
+          ciclo_inicio: string
+          clt_ativos: number
+          estimativa: number
+          eventos_usados: number
+          limite_clt: number
+          limite_eventos: number
+          limite_pessoas_evento: number
+          limite_supervisores: number
+          mensalidade: number
+          participacoes_excedentes: number
+          participacoes_incluidas: number
+          participacoes_usadas: number
+          plano_codigo: string
+          plano_id: string
+          plano_nome: string
+          recursos: Json
+          valor_excedente: number
+        }[]
+      }
       saldo_empresa: { Args: { _empresa_id: string }; Returns: number }
+      sincronizar_participacao: {
+        Args: { _evento_id: string; _freelancer_id: string }
+        Returns: undefined
+      }
       tem_capacidade: {
         Args: { _capacidade: string; _user_id: string }
         Returns: boolean
