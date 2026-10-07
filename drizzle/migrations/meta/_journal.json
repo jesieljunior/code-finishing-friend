@@ -64,6 +64,13 @@
       "when": 1791301268785,
       "tag": "0008_billing_v2_participacoes",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791385757509,
+      "tag": "0009_billing_v2_security_snapshots",
+      "breakpoints": true
     }
   ]
 }

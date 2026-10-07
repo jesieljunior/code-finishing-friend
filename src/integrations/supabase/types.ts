@@ -246,6 +246,79 @@ export type Database = {
           },
         ]
       }
+      ciclos_cobranca: {
+        Row: {
+          assinatura_id: string | null
+          criado_em: string
+          desconto_tipo: string | null
+          desconto_valor: number
+          empresa_id: string
+          fim: string
+          id: string
+          inicio: string
+          mensalidade: number
+          participacoes_incluidas: number
+          plano_id: string | null
+          plano_nome: string
+          trial_ate: string | null
+          valor_excedente: number
+        }
+        Insert: {
+          assinatura_id?: string | null
+          criado_em?: string
+          desconto_tipo?: string | null
+          desconto_valor?: number
+          empresa_id: string
+          fim: string
+          id?: string
+          inicio: string
+          mensalidade: number
+          participacoes_incluidas: number
+          plano_id?: string | null
+          plano_nome: string
+          trial_ate?: string | null
+          valor_excedente: number
+        }
+        Update: {
+          assinatura_id?: string | null
+          criado_em?: string
+          desconto_tipo?: string | null
+          desconto_valor?: number
+          empresa_id?: string
+          fim?: string
+          id?: string
+          inicio?: string
+          mensalidade?: number
+          participacoes_incluidas?: number
+          plano_id?: string | null
+          plano_nome?: string
+          trial_ate?: string | null
+          valor_excedente?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ciclos_cobranca_assinatura_id_fkey"
+            columns: ["assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "assinaturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ciclos_cobranca_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ciclos_cobranca_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           ativo: boolean
@@ -2233,6 +2306,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      abrir_ciclo_cobranca: { Args: { _empresa_id: string }; Returns: string }
       ciclo_da_empresa: {
         Args: { _empresa_id: string; _ref?: string }
         Returns: {
@@ -2363,6 +2437,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      validar_acesso_cobranca: {
+        Args: { _empresa_id: string }
+        Returns: undefined
       }
     }
     Enums: {
