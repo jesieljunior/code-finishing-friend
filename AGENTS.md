@@ -11,3 +11,5 @@
 
 - Public time-clock writes must pass through server functions, enforce ordered marks and QR expiry, and record supervisor/public audit trails; this prevents bypassing attendance controls from the browser.
 - Time-clock selfies are human-review evidence with explicit consent and configurable retention, not biometric liveness proof; this keeps the product claim aligned with implemented validation.
+- Billing V2 is derived from database-deduplicated final participations with server-side plan gates and cycle price snapshots; browser state cannot authorize paid operations or set invoices.
+- Keep SaaS invoices separate from worker funding and gateway costs; payout and collection paths must never generate legacy percentage fees.
