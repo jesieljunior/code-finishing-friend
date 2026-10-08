@@ -10,7 +10,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireOrganizationContext } from "@/lib/autorizacao.server";
 
-const arredonda = (n: number) => Math.round(n * 100) / 100;
+
 
 const cobrancaSchema = z.object({
   clienteId: z.string().uuid(),
@@ -69,8 +69,8 @@ export const criarCobranca = createServerFn({ method: "POST" })
     if (documentoLimpo.length !== 11 && documentoLimpo.length !== 14)
       throw new Error("CPF/CNPJ inválido para emitir a cobrança.");
 
-    const { precoEfetivo } = await import("./pagamentos.server");
-    const preco = await precoEfetivo(supabase, empresaId);
+    const { exigirRecursoPlano } = await import("./plano.server");
+    await exigirRecursoPlano(supabase, empresaId, "financeiro");
 
     const { data: registro, error: erroInsert } = await supabase
       .from("cobrancas")
@@ -105,18 +105,6 @@ export const criarCobranca = createServerFn({ method: "POST" })
         .update({ parceiro_cliente_id: clienteAsaasId })
         .eq("id", cliente.id);
 
-      const masterWalletId = process.env["ASAAS_MASTER_WALLET_ID"];
-      const usaPercentual =
-        preco &&
-        !preco.em_trial &&
-        (preco.modelo === "percentual_evento" || preco.modelo === "assinatura_percentual") &&
-        preco.percentual > 0;
-
-      const split =
-        masterWalletId && usaPercentual
-          ? [{ walletId: masterWalletId, percentualValue: preco!.percentual }]
-          : undefined;
-
       const cobranca = await criarCobrancaAsaas({
         clienteAsaasId,
         valor: data.valor,
@@ -124,23 +112,7 @@ export const criarCobranca = createServerFn({ method: "POST" })
         vencimento: data.vencimento,
         descricao: data.descricao,
         referenciaExterna: registro.id,
-        ...(split ? { split } : {}),
       });
-
-      if (split?.length && preco) {
-        const valorTaxa = arredonda((data.valor * preco.percentual) / 100);
-        if (valorTaxa > 0) {
-          await supabase.from("taxas_plataforma").insert({
-            empresa_id: empresaId,
-            evento_id: data.eventoId ?? null,
-            cobranca_id: registro.id,
-            modelo: preco.modelo as "percentual_evento" | "taxa_fixa_pix" | "assinatura_percentual",
-            base_calculo: data.valor,
-            valor: valorTaxa,
-            status: "pendente",
-          });
-        }
-      }
 
       const pix = data.forma === "pix" ? await obterPixCopiaCola(cobranca.id) : null;
 
@@ -308,6 +280,10 @@ export const agendarPagamentos = createServerFn({ method: "POST" })
     const organizacao = requireOrganizationContext(context);
     const { exigirCapacidade } = await import("./autorizacao.server");
     await exigirCapacidade(context.supabase, context.userId, "financeiro.gerenciar");
+    const { exigirRecursoPlano } = await import("./plano.server");
+    if (!organizacao.empresaId) throw new Error("Agência não encontrada.");
+    await exigirRecursoPlano(context.supabase, organizacao.empresaId, "agendamento_pix");
+    if (data.pagamentoIds.length > 1) await exigirRecursoPlano(context.supabase, organizacao.empresaId, "pix_massa");
     const quando = new Date(data.dataAgendada);
     if (Number.isNaN(quando.getTime()) || quando <= new Date()) {
       throw new Error("Escolha uma data futura para os pagamentos.");

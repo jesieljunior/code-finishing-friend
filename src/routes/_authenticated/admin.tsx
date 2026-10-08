@@ -21,7 +21,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSessao } from "@/hooks/use-sessao";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { ROTULO_MODELO_COBRANCA, moeda, type ModeloCobranca } from "@/lib/dominio";
+import { moeda } from "@/lib/dominio";
+import { RECURSOS_PLANO, temRecurso } from "@/lib/cobranca-v2";
 import { revisarCadastroFiscal } from "@/lib/fiscal.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -245,23 +246,6 @@ function Agencias() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Percentual próprio (%)</Label>
-                <Input
-                  inputMode="decimal"
-                  placeholder="usar do plano"
-                  defaultValue={a?.percentual_override ?? ""}
-                  onBlur={(ev) =>
-                    salvarAssinatura.mutate({
-                      empresaId: e.id,
-                      patch: {
-                        percentual_override: ev.target.value ? numero(ev.target.value) : null,
-                      },
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-1.5">
                 <Label>Mensalidade própria (R$)</Label>
                 <Input
                   inputMode="decimal"
@@ -284,12 +268,6 @@ function Agencias() {
     </ul>
   );
 }
-
-const MODELOS: ModeloCobranca[] = [
-  "percentual_evento",
-  "taxa_fixa_pix",
-  "assinatura_percentual",
-];
 
 function Planos() {
   const queryClient = useQueryClient();
@@ -366,51 +344,6 @@ function Planos() {
               </label>
             </div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="space-y-1.5 lg:col-span-2">
-                <Label>Modelo</Label>
-                <Select
-                  value={p.modelo}
-                  onValueChange={(v) => {
-                    if (MODELOS.includes(v as ModeloCobranca)) {
-                      salvar.mutate({ id: p.id, patch: { modelo: v as ModeloCobranca } });
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MODELOS.map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {ROTULO_MODELO_COBRANCA[m]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Percentual (%)</Label>
-                <Input
-                  inputMode="decimal"
-                  defaultValue={String(p.percentual)}
-                  onBlur={(e) =>
-                    salvar.mutate({ id: p.id, patch: { percentual: numero(e.target.value) } })
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Taxa por Pix (R$)</Label>
-                <Input
-                  inputMode="decimal"
-                  defaultValue={String(p.taxa_fixa_pix)}
-                  onBlur={(e) =>
-                    salvar.mutate({
-                      id: p.id,
-                      patch: { taxa_fixa_pix: numero(e.target.value) },
-                    })
-                  }
-                />
-              </div>
               <div className="space-y-1.5">
                 <Label>Mensalidade (R$)</Label>
                 <Input
@@ -434,7 +367,19 @@ function Planos() {
                   }
                 />
               </div>
+              {([
+                ["participacoes_incluidas", "Participações incluídas"], ["valor_excedente", "Excedente por participação (R$)"],
+                ["limite_eventos_ciclo", "Eventos por ciclo"], ["limite_pessoas_evento", "Pessoas por evento"],
+                ["limite_clt", "CLT ativos"], ["limite_supervisores", "Supervisores"],
+                ["retencao_evidencias_dias", "Retenção de evidências (dias)"], ["aviso_vendas_acima", "Avisar vendas acima de"],
+              ] as const).map(([campo, label]) => <div key={campo} className="space-y-1.5"><Label>{label}</Label><Input type="number" min={0} step={campo === "valor_excedente" ? "0.01" : "1"} placeholder="Sem limite" defaultValue={p[campo] ?? ""} onBlur={e => {
+                const nullable = campo !== "participacoes_incluidas" && campo !== "valor_excedente";
+                const valor = e.target.value === "" && nullable ? null : Number(e.target.value);
+                if (valor !== null && (!Number.isFinite(valor) || valor < 0 || (campo !== "valor_excedente" && !Number.isInteger(valor)))) { toast.error("Valor inválido."); return; }
+                salvar.mutate({ id: p.id, patch: { [campo]: valor } });
+              }} /></div>)}
             </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{RECURSOS_PLANO.map(r => <label key={r.chave} className="flex items-center justify-between gap-3 text-xs">{r.rotulo}<Switch checked={temRecurso(p.recursos, r.chave)} onCheckedChange={v => salvar.mutate({ id: p.id, patch: { recursos: { ...(p.recursos as Record<string, boolean>), [r.chave]: v } } })} /></label>)}</div>
           </li>
         ))}
       </ul>
@@ -562,49 +507,32 @@ function Cupons() {
 }
 
 function Receita() {
-  const q = useQuery({
-    queryKey: ["admin", "receita"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("taxas_plataforma")
-        .select("valor, status, criado_em, empresas(nome)")
-        .order("criado_em", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return data;
-    },
-  });
-
+  const q = useQuery({ queryKey: ["admin", "receita-v2"], queryFn: async () => {
+    const [faturas, custos, assinaturas, historico, planos] = await Promise.all([
+      supabase.from("faturas_plataforma").select("*, empresas(nome)").order("ciclo_inicio", { ascending: false }),
+      supabase.from("custos_meio_pagamento").select("custo"),
+      supabase.from("assinaturas").select("plano_id, mensalidade_override, status"),
+      supabase.from("assinaturas_historico").select("empresa_id, plano_anterior_id, plano_novo_id"),
+      supabase.from("planos").select("id, codigo, mensalidade"),
+    ]);
+    for (const r of [faturas, custos, assinaturas, historico, planos]) if (r.error) throw r.error;
+    return { faturas: faturas.data ?? [], custos: custos.data ?? [], assinaturas: assinaturas.data ?? [], historico: historico.data ?? [], planos: planos.data ?? [] };
+  }});
   if (q.isPending) return <LoadingBloco />;
   if (q.isError) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
-
-  const total = q.data
-    .filter((t) => t.status === "cobrada")
-    .reduce((s, t) => s + Number(t.valor), 0);
-
-  return (
-    <div className="space-y-3">
-      <div className="rounded-md border border-border bg-card px-4 py-3">
-        <p className="text-xs text-muted-foreground">Receita já cobrada</p>
-        <p className="tabular-nums text-xl font-semibold">{moeda(total)}</p>
-      </div>
-      <ul className="space-y-2">
-        {q.data.map((t, i) => (
-          <li
-            key={i}
-            className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-4 py-2 text-sm"
-          >
-            <span className="truncate">
-              {(t.empresas as { nome: string } | null)?.nome ?? "—"}
-            </span>
-            <span className="tabular-nums">
-              {moeda(t.valor)} · {t.status}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  const pagas = q.data.faturas.filter(f => f.status === "paga");
+  const receita = pagas.reduce((s,f) => s + Number(f.total),0);
+  const variavel = pagas.reduce((s,f) => s + Number(f.valor_excedente_total),0);
+  const mrr = q.data.assinaturas.filter(a => a.status === "ativa").reduce((s,a) => s + Number(a.mensalidade_override ?? q.data.planos.find(p => p.id === a.plano_id)?.mensalidade ?? 0),0);
+  const free = q.data.planos.find(p => p.codigo === "free")?.id;
+  const convertidas = new Set(q.data.historico.filter(h => h.plano_anterior_id === free && h.plano_novo_id && h.plano_novo_id !== free).map(h => h.empresa_id)).size;
+  return <div className="space-y-5"><dl className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{[["MRR contratado",moeda(mrr)],["SaaS recebido",moeda(receita)],["Excedentes brutos recebidos",moeda(variavel)],["Conversões Free → pago",String(convertidas)]].map(([label,v]) => <div key={label}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-2 text-xl font-semibold">{v}</dd></div>)}</dl><p className="text-sm text-muted-foreground">Custos do gateway: {moeda(q.data.custos.reduce((s,c) => s + Number(c.custo),0))} · Recursos de trabalhadores não entram na receita SaaS.</p><ul className="divide-y divide-border">{q.data.faturas.map(f => <li key={f.id} className="flex flex-wrap justify-between gap-3 py-3 text-sm"><span>{f.empresas?.nome ?? "—"} · {f.plano_nome}</span><span>{moeda(f.total)} · {f.participacoes_usadas} participações · {f.status}</span></li>)}</ul><TaxasPagamento /></div>;
+}
+function TaxasPagamento() {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["admin", "taxas-meio"], queryFn: async () => { const r = await supabase.from("taxas_meio_pagamento").select("*").order("rotulo"); if (r.error) throw r.error; return r.data; } });
+  const salvar = useMutation({ mutationFn: async ({ id, taxa }: {id: string; taxa: number}) => { if (!Number.isFinite(taxa) || taxa < 0 || taxa >= 1) throw new Error("Taxa inválida."); const r = await supabase.from("taxas_meio_pagamento").update({taxa}).eq("id",id); if (r.error) throw r.error; }, onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin", "taxas-meio"] }); toast.success("Custo atualizado."); }, onError: (e: Error) => toast.error(e.message) });
+  return <section className="border-t border-border pt-5"><h2 className="font-semibold">Custos do meio de pagamento</h2><div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{q.data?.map(t => <div key={t.id}><Label>{t.rotulo} (%)</Label><Input type="number" min={0} max={99.99} step="0.01" defaultValue={(t.taxa*100).toFixed(2)} onBlur={e => salvar.mutate({id:t.id,taxa:Number(e.target.value)/100})} /></div>)}</div></section>;
 }
 
 function Equipe() {
