@@ -1,130 +1,14 @@
 /**
- * Núcleo do Pix de saída ao freelancer e da taxa da PayCrew.
+ * Núcleo do Pix de saída ao freelancer sem taxa percentual da PayCrew.
  * Recebe o cliente Supabase de fora para servir tanto a agência (RLS do
  * usuário) quanto o suporte da plataforma (cliente administrativo).
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const arredonda = (n: number) => Math.round(n * 100) / 100;
-
 async function exigirCadastroFiscalValidado(supabase: any, empresaId: string) {
-  const { data: validada, error } = await supabase.rpc("empresa_fiscal_validada", {
-    _empresa_id: empresaId,
-  });
-  if (error) throw new Error("Não foi possível verificar o cadastro fiscal da agência.");
-  if (!validada) {
-    throw new Error(
-      "Pix bloqueado: complete e aguarde a validação do cadastro fiscal da agência.",
-    );
-  }
-}
-
-export type PrecoEfetivo = {
-  modelo: "percentual_evento" | "taxa_fixa_pix" | "assinatura_percentual";
-  percentual: number;
-  taxa_fixa_pix: number;
-  mensalidade: number;
-  status: string;
-  trial_ate: string | null;
-  em_trial: boolean;
-  plano_nome: string | null;
-  cupom_codigo: string | null;
-};
-
-/** Preço válido hoje para a agência: plano + ajustes + trial + cupom. */
-export async function precoEfetivo(
-  supabase: any,
-  empresaId: string,
-): Promise<PrecoEfetivo | null> {
-  const { data } = await supabase.rpc("preco_efetivo", { _empresa_id: empresaId });
-  const linha = Array.isArray(data) ? data[0] : data;
-  if (!linha) return null;
-  return {
-    ...linha,
-    percentual: Number(linha.percentual ?? 0),
-    taxa_fixa_pix: Number(linha.taxa_fixa_pix ?? 0),
-    mensalidade: Number(linha.mensalidade ?? 0),
-  } as PrecoEfetivo;
-}
-
-/**
- * Garante a taxa da plataforma conforme o plano da agência:
- * - percentual: uma taxa por evento, sobre o total dos fechamentos aprovados;
- * - taxa fixa: uma taxa por Pix enviado.
- */
-export async function garantirTaxa(
-  supabase: any,
-  args: { empresaId: string; eventoId: string | null; pagamentoId: string; valorPix: number },
-) {
-  const preco = await precoEfetivo(supabase, args.empresaId);
-  if (!preco || preco.em_trial) return null;
-
-  if (preco.modelo === "taxa_fixa_pix") {
-    const valor = arredonda(preco.taxa_fixa_pix);
-    if (valor <= 0) return null;
-    const { data } = await supabase
-      .from("taxas_plataforma")
-      .insert({
-        empresa_id: args.empresaId,
-        pagamento_id: args.pagamentoId,
-        modelo: preco.modelo,
-        base_calculo: args.valorPix,
-        valor,
-        status: "cobrada",
-      })
-      .select("id, valor")
-      .maybeSingle();
-    return data ?? null;
-  }
-
-  if (!args.eventoId) return null;
-
-  const { data: jaExiste } = await supabase
-    .from("taxas_plataforma")
-    .select("id")
-    .eq("evento_id", args.eventoId)
-    .maybeSingle();
-  if (jaExiste) return null;
-
-  const { data: cobrancaComSplit } = await supabase
-    .from("cobrancas")
-    .select("id")
-    .eq("evento_id", args.eventoId)
-    .eq("status", "pago")
-    .not("parceiro_cobranca_id", "is", null)
-    .limit(1)
-    .maybeSingle();
-
-  const masterWalletId = process.env["ASAAS_MASTER_WALLET_ID"];
-  if (cobrancaComSplit && masterWalletId) return null;
-
-  const { data: fechamentos } = await supabase
-    .from("fechamentos")
-    .select("valor_calculado, status, escalas!inner(equipes!inner(evento_id))")
-    .eq("escalas.equipes.evento_id", args.eventoId)
-    .eq("status", "aprovado");
-
-  const base = (fechamentos ?? []).reduce(
-    (s: number, f: { valor_calculado: number }) => s + Number(f.valor_calculado),
-    0,
-  );
-  const valor = arredonda((base * preco.percentual) / 100);
-  if (valor <= 0) return null;
-
-  const { data } = await supabase
-    .from("taxas_plataforma")
-    .insert({
-      empresa_id: args.empresaId,
-      evento_id: args.eventoId,
-      modelo: preco.modelo,
-      base_calculo: base,
-      valor,
-      status: "cobrada",
-    })
-    .select("id, valor")
-    .maybeSingle();
-  return data ?? null;
+  const { data, error } = await supabase.rpc("empresa_fiscal_validada", { _empresa_id: empresaId });
+  if (error || !data) throw new Error("Pix bloqueado: complete e aguarde a validação fiscal da agência.");
 }
 
 /** Resolve a empresa do pagamento seguindo a cadeia de dependência do pagamento. */
@@ -167,7 +51,7 @@ export async function resolverEmpresaDoPagamento(supabase: any, pagamentoId: str
   return evento.empresa_id as string;
 }
 
-/** Valida saldo, envia o Pix, debita o saldo e cobra a taxa da plataforma. */
+/** Valida saldo, envia o Pix, debita o saldo sem debitar receita SaaS. */
 export async function enviarPix(supabase: any, pagamentoId: string, empresaId?: string | null) {
   const { data: pagamento } = await supabase
     .from("pagamentos")
@@ -203,6 +87,9 @@ export async function enviarPix(supabase: any, pagamentoId: string, empresaId?: 
     if (!Number.isFinite(valor) || valor < 0.01) {
       throw new Error("Pagamento inválido: corrija o fechamento para um valor mínimo de R$ 0,01.");
     }
+    const { exigirRecursoPlano } = await import("./plano.server");
+    await exigirRecursoPlano(supabase, empresaDestino, "financeiro");
+    if (pagamento.status === "agendado") await exigirRecursoPlano(supabase, empresaDestino, "agendamento_pix");
     await exigirCadastroFiscalValidado(supabase, empresaDestino);
     const { data: saldo } = await supabase.rpc("saldo_empresa", { _empresa_id: empresaDestino });
     if (Number(saldo ?? 0) < valor)
@@ -239,24 +126,7 @@ export async function enviarPix(supabase: any, pagamentoId: string, empresaId?: 
       pagamento_id: pagamento.id,
     });
 
-    const taxa = await garantirTaxa(supabase, {
-      empresaId: empresaDestino,
-      eventoId: equipe?.evento_id ?? null,
-      pagamentoId: pagamento.id,
-      valorPix: valor,
-    });
-
-    if (taxa) {
-      await supabase.from("movimentos_saldo").insert({
-        empresa_id: empresaDestino,
-        tipo: "debito",
-        valor: taxa.valor,
-        descricao: "Taxa PayCrew",
-        taxa_id: taxa.id,
-      });
-    }
-
-    return { ok: true, txid: transferencia.id as string, taxa: Number(taxa?.valor ?? 0) };
+    return { ok: true, txid: transferencia.id as string, taxa: 0 };
   } catch (e) {
     const mensagem = e instanceof Error ? e.message : "Falha ao enviar o Pix.";
     await supabase

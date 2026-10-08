@@ -36,6 +36,8 @@ export const iniciarRecarga = createServerFn({ method: "POST" })
       .maybeSingle();
     const empresaId = usuario?.empresa_id;
     if (!empresaId) throw new Error("Usuário sem agência.");
+    const { exigirRecursoPlano } = await import("./plano.server");
+    await exigirRecursoPlano(supabase, empresaId, "financeiro");
 
     const { data: empresa } = await supabase
       .from("empresas")

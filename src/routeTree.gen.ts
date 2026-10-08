@@ -23,6 +23,7 @@ import { Route as AuthenticatedFinanceiroRouteImport } from './routes/_authentic
 import { Route as AuthenticatedFreelancersRouteImport } from './routes/_authenticated/freelancers'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedPlanoRouteImport } from './routes/_authenticated/plano'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedSaldoRouteImport } from './routes/_authenticated/saldo'
 import { Route as AuthenticatedSuporteRouteImport } from './routes/_authenticated/suporte'
@@ -33,6 +34,7 @@ import { Route as AuthenticatedOperacaoIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedOperacaoEventoIdRouteImport } from './routes/_authenticated/operacao.$eventoId'
 import { Route as ApiInternalProcessarPagamentosRouteImport } from './routes/api/internal/processar-pagamentos'
 import { Route as ApiInternalPurgarSelfiesPontoRouteImport } from './routes/api/internal/purgar-selfies-ponto'
+import { Route as ApiPublicCronFaturarRouteImport } from './routes/api/public/cron/faturar'
 import { Route as ApiPublicWebhooksAsaasRouteImport } from './routes/api/public/webhooks/asaas'
 
 const IndexRoute = IndexRouteImport.update({
@@ -108,6 +110,11 @@ const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlanoRoute = AuthenticatedPlanoRouteImport.update({
+  id: '/plano',
+  path: '/plano',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -164,6 +171,11 @@ const ApiInternalPurgarSelfiesPontoRoute =
     path: '/api/internal/purgar-selfies-ponto',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronFaturarRoute = ApiPublicCronFaturarRouteImport.update({
+  id: '/api/public/cron/faturar',
+  path: '/api/public/cron/faturar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhooksAsaasRoute = ApiPublicWebhooksAsaasRouteImport.update({
   id: '/api/public/webhooks/asaas',
   path: '/api/public/webhooks/asaas',
@@ -184,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/freelancers': typeof AuthenticatedFreelancersRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/plano': typeof AuthenticatedPlanoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/saldo': typeof AuthenticatedSaldoRoute
   '/suporte': typeof AuthenticatedSuporteRoute
@@ -194,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/api/internal/purgar-selfies-ponto': typeof ApiInternalPurgarSelfiesPontoRoute
   '/eventos/': typeof AuthenticatedEventosIndexRoute
   '/operacao/': typeof AuthenticatedOperacaoIndexRoute
+  '/api/public/cron/faturar': typeof ApiPublicCronFaturarRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRoutesByTo {
@@ -210,6 +224,7 @@ export interface FileRoutesByTo {
   '/freelancers': typeof AuthenticatedFreelancersRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/plano': typeof AuthenticatedPlanoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/saldo': typeof AuthenticatedSaldoRoute
   '/suporte': typeof AuthenticatedSuporteRoute
@@ -220,6 +235,7 @@ export interface FileRoutesByTo {
   '/api/internal/purgar-selfies-ponto': typeof ApiInternalPurgarSelfiesPontoRoute
   '/eventos': typeof AuthenticatedEventosIndexRoute
   '/operacao': typeof AuthenticatedOperacaoIndexRoute
+  '/api/public/cron/faturar': typeof ApiPublicCronFaturarRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRoutesById {
@@ -238,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/freelancers': typeof AuthenticatedFreelancersRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/plano': typeof AuthenticatedPlanoRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/saldo': typeof AuthenticatedSaldoRoute
   '/_authenticated/suporte': typeof AuthenticatedSuporteRoute
@@ -248,6 +265,7 @@ export interface FileRoutesById {
   '/api/internal/purgar-selfies-ponto': typeof ApiInternalPurgarSelfiesPontoRoute
   '/_authenticated/eventos/': typeof AuthenticatedEventosIndexRoute
   '/_authenticated/operacao/': typeof AuthenticatedOperacaoIndexRoute
+  '/api/public/cron/faturar': typeof ApiPublicCronFaturarRoute
   '/api/public/webhooks/asaas': typeof ApiPublicWebhooksAsaasRoute
 }
 export interface FileRouteTypes {
@@ -266,6 +284,7 @@ export interface FileRouteTypes {
     | '/freelancers'
     | '/onboarding'
     | '/painel'
+    | '/plano'
     | '/relatorios'
     | '/saldo'
     | '/suporte'
@@ -276,6 +295,7 @@ export interface FileRouteTypes {
     | '/api/internal/purgar-selfies-ponto'
     | '/eventos/'
     | '/operacao/'
+    | '/api/public/cron/faturar'
     | '/api/public/webhooks/asaas'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -292,6 +312,7 @@ export interface FileRouteTypes {
     | '/freelancers'
     | '/onboarding'
     | '/painel'
+    | '/plano'
     | '/relatorios'
     | '/saldo'
     | '/suporte'
@@ -302,6 +323,7 @@ export interface FileRouteTypes {
     | '/api/internal/purgar-selfies-ponto'
     | '/eventos'
     | '/operacao'
+    | '/api/public/cron/faturar'
     | '/api/public/webhooks/asaas'
   id:
     | '__root__'
@@ -319,6 +341,7 @@ export interface FileRouteTypes {
     | '/_authenticated/freelancers'
     | '/_authenticated/onboarding'
     | '/_authenticated/painel'
+    | '/_authenticated/plano'
     | '/_authenticated/relatorios'
     | '/_authenticated/saldo'
     | '/_authenticated/suporte'
@@ -329,6 +352,7 @@ export interface FileRouteTypes {
     | '/api/internal/purgar-selfies-ponto'
     | '/_authenticated/eventos/'
     | '/_authenticated/operacao/'
+    | '/api/public/cron/faturar'
     | '/api/public/webhooks/asaas'
   fileRoutesById: FileRoutesById
 }
@@ -339,6 +363,7 @@ export interface RootRouteChildren {
   PontoTokenRoute: typeof PontoTokenRoute
   ApiInternalProcessarPagamentosRoute: typeof ApiInternalProcessarPagamentosRoute
   ApiInternalPurgarSelfiesPontoRoute: typeof ApiInternalPurgarSelfiesPontoRoute
+  ApiPublicCronFaturarRoute: typeof ApiPublicCronFaturarRoute
   ApiPublicWebhooksAsaasRoute: typeof ApiPublicWebhooksAsaasRoute
 }
 
@@ -442,6 +467,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/plano': {
+      id: '/_authenticated/plano'
+      path: '/plano'
+      fullPath: '/plano'
+      preLoaderRoute: typeof AuthenticatedPlanoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/relatorios': {
       id: '/_authenticated/relatorios'
       path: '/relatorios'
@@ -512,6 +544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInternalPurgarSelfiesPontoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/faturar': {
+      id: '/api/public/cron/faturar'
+      path: '/api/public/cron/faturar'
+      fullPath: '/api/public/cron/faturar'
+      preLoaderRoute: typeof ApiPublicCronFaturarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/asaas': {
       id: '/api/public/webhooks/asaas'
       path: '/api/public/webhooks/asaas'
@@ -534,6 +573,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFreelancersRoute: typeof AuthenticatedFreelancersRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedPlanoRoute: typeof AuthenticatedPlanoRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedSaldoRoute: typeof AuthenticatedSaldoRoute
   AuthenticatedSuporteRoute: typeof AuthenticatedSuporteRoute
@@ -555,6 +595,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFreelancersRoute: AuthenticatedFreelancersRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedPlanoRoute: AuthenticatedPlanoRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedSaldoRoute: AuthenticatedSaldoRoute,
   AuthenticatedSuporteRoute: AuthenticatedSuporteRoute,
@@ -574,6 +615,7 @@ const rootRouteChildren: RootRouteChildren = {
   PontoTokenRoute: PontoTokenRoute,
   ApiInternalProcessarPagamentosRoute: ApiInternalProcessarPagamentosRoute,
   ApiInternalPurgarSelfiesPontoRoute: ApiInternalPurgarSelfiesPontoRoute,
+  ApiPublicCronFaturarRoute: ApiPublicCronFaturarRoute,
   ApiPublicWebhooksAsaasRoute: ApiPublicWebhooksAsaasRoute,
 }
 export const routeTree = rootRouteImport

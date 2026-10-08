@@ -12,8 +12,6 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessao } from "@/hooks/use-sessao";
 import {
-  DESCRICAO_MODELO_COBRANCA,
-  ROTULO_MODELO_COBRANCA,
   moeda,
   type Configuracao,
 } from "@/lib/dominio";
@@ -28,6 +26,8 @@ export const Route = createFileRoute("/_authenticated/configuracoes")({
         content:
           "Defina as regras da operação: selfie e GPS no check-in, confirmação de presença, substituição de freelancer e ocorrências.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { property: "og:title", content: "Configurações da agência — PayCrew" },
       {
         property: "og:description",
@@ -101,7 +101,7 @@ function Configuracoes() {
     enabled: Boolean(empresaId),
     queryFn: async () => {
       if (!empresaId) throw new Error("Agência não encontrada.");
-      const { data, error } = await supabase.rpc("preco_efetivo", {
+      const { data, error } = await supabase.rpc("resumo_uso_empresa", {
         _empresa_id: empresaId,
       });
       if (error) throw error;
@@ -265,57 +265,6 @@ function CadastroFiscal({ empresa }: { empresa: {
   );
 }
 
-function PlanoCobranca({
-  plano,
-}: {
-  plano: {
-    plano_nome: string | null;
-    modelo: keyof typeof ROTULO_MODELO_COBRANCA;
-    percentual: number;
-    taxa_fixa_pix: number;
-    mensalidade: number;
-    em_trial: boolean;
-    trial_ate: string | null;
-    cupom_codigo: string | null;
-  };
-}) {
-  return (
-    <section className="mt-6 max-w-2xl rounded-md border border-border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold">Plano {plano.plano_nome ?? "PayCrew"}</h2>
-          <p className="text-xs text-muted-foreground">
-            {ROTULO_MODELO_COBRANCA[plano.modelo]} · {DESCRICAO_MODELO_COBRANCA[plano.modelo]}
-          </p>
-        </div>
-        {plano.em_trial ? (
-          <span className="rounded-sm bg-accent px-2 py-1 text-xs font-medium">
-            Teste grátis até {plano.trial_ate}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-        <div>
-          <p className="text-xs text-muted-foreground">Por evento</p>
-          <p className="font-medium">{plano.em_trial ? "Grátis" : `${plano.percentual}%`}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Por Pix</p>
-          <p className="font-medium">{plano.em_trial ? "Grátis" : moeda(plano.taxa_fixa_pix)}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">Mensalidade</p>
-          <p className="font-medium">{plano.em_trial ? "Grátis" : moeda(plano.mensalidade)}</p>
-        </div>
-      </div>
-      {plano.cupom_codigo ? (
-        <p className="mt-3 text-xs text-muted-foreground">Cupom aplicado: {plano.cupom_codigo}</p>
-      ) : null}
-      <p className="mt-3 text-xs text-muted-foreground">
-        Condições definidas pela PayCrew. Fale com o suporte para alterar seu plano.
-      </p>
-    </section>
-  );
+function PlanoCobranca({ plano }: { plano: { plano_nome: string | null; mensalidade: number; participacoes_incluidas: number; valor_excedente: number } }) {
+  return <section className="mt-6 max-w-2xl border-t border-border pt-5"><h2 className="font-semibold">Plano {plano.plano_nome ?? "PayCrew"}</h2><dl className="mt-4 grid gap-4 sm:grid-cols-3"><div><dt className="text-xs text-muted-foreground">Mensalidade</dt><dd>{moeda(plano.mensalidade)}</dd></div><div><dt className="text-xs text-muted-foreground">Participações incluídas</dt><dd>{plano.participacoes_incluidas}</dd></div><div><dt className="text-xs text-muted-foreground">Excedente por participação</dt><dd>{moeda(plano.valor_excedente)}</dd></div></dl></section>;
 }
-

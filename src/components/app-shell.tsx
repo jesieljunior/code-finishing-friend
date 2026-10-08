@@ -35,6 +35,7 @@ interface ItemNav {
 }
 
 const NAV: ItemNav[] = [
+  { to: "/plano", label: "Plano e uso", icone: FileBarChart, capacidade: "configuracoes.gerenciar" },
   { to: "/painel", label: "Painel", icone: Building2, mobile: true },
   {
     to: "/saldo",
