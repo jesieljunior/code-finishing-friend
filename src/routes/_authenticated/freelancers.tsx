@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useSessao } from "@/hooks/use-sessao";
 import { supabase } from "@/integrations/supabase/client";
+import { AVISO_CLT } from "@/lib/cobranca-v2";
 import { formatarCpf, ROTULO_TIPO_VINCULO, soDigitos, type Freelancer, type TipoVinculo } from "@/lib/dominio";
 
 export const Route = createFileRoute("/_authenticated/freelancers")({
@@ -223,6 +224,8 @@ function Freelancers() {
     setImportando(true);
     try {
       if (!empresaId) throw new Error("Organização não encontrada.");
+      const recurso = await supabase.rpc("recurso_habilitado", { _empresa_id: empresaId, _recurso: "importacao_excel" });
+      if (recurso.error || !recurso.data) throw new Error("Importação Excel indisponível no seu plano. Faça upgrade em Plano e uso.");
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
       const primeiraAba = workbook.Sheets[workbook.SheetNames[0] ?? ""];
       if (!primeiraAba) throw new Error("A planilha não possui uma aba válida.");
@@ -293,7 +296,7 @@ function Freelancers() {
   return (
     <AppShell
       titulo="Freelancers"
-      descricao="Equipe disponível para escala"
+      descricao={`Equipe disponível para escala · ${AVISO_CLT}`}
       acoes={
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" onClick={baixarModelo}>

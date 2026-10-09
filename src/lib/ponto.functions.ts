@@ -92,7 +92,9 @@ export const obterContextoPonto = createServerFn({ method: "GET" })
       .eq("empresa_id", evento.empresa_id)
       .maybeSingle();
 
+    const { data: plano } = await supabaseAdmin.rpc("plano_da_empresa", { _empresa_id: evento.empresa_id });
     return {
+      pontoBasico: plano?.codigo === "free",
       evento: {
         nome: evento.nome,
         local: evento.local,
@@ -236,7 +238,10 @@ export const registrarPonto = createServerFn({ method: "POST" })
       .eq("escala_id", escala.id)
       .neq("status", "recusado")
       .order("registrado_em");
-    const esperado = SEQUENCIA[(existentes ?? []).length];
+    const { data: plano, error: erroPlano } = await supabaseAdmin.rpc("plano_da_empresa", { _empresa_id: evento.empresa_id });
+    if (erroPlano) throw new Error("Não foi possível verificar o plano.");
+    const sequencia = plano?.codigo === "free" ? ["entrada", "saida"] : SEQUENCIA;
+    const esperado = sequencia[(existentes ?? []).length];
     if (!esperado) throw new Error("Todos os registros desta escala já foram concluídos.");
     if (data.tipo !== esperado) {
       throw new Error(`O próximo registro deve ser ${esperado.replaceAll("_", " ")}.`);
@@ -244,7 +249,7 @@ export const registrarPonto = createServerFn({ method: "POST" })
 
     const agora = new Date();
     const foraHorario = Boolean(evento.data_fim && agora > new Date(evento.data_fim));
-    const retencaoDias = config?.selfie_retencao_dias ?? 90;
+    const retencaoDias = Math.min(config?.selfie_retencao_dias ?? 90, plano?.retencao_evidencias_dias ?? 365);
     const selfieExpiraEm = data.fotoBase64
       ? new Date(agora.getTime() + retencaoDias * 24 * 60 * 60_000).toISOString()
       : null;

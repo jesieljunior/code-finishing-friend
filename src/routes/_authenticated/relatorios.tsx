@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { dataCurta, lista, moeda, um, type Ponto } from "@/lib/dominio";
+import { useSessao } from "@/hooks/use-sessao";
 import { calcularFechamento } from "@/lib/dominio";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
@@ -31,9 +32,14 @@ export const Route = createFileRoute("/_authenticated/relatorios")({
 });
 
 function Relatorios() {
+  const { empresaId } = useSessao();
   const eventos = useQuery({
-    queryKey: ["relatorios"],
+    queryKey: ["relatorios", empresaId],
+    enabled: Boolean(empresaId),
     queryFn: async () => {
+      if (!empresaId) throw new Error("Agência não encontrada.");
+      const recurso = await supabase.rpc("recurso_habilitado", { _empresa_id: empresaId, _recurso: "financeiro" });
+      if (recurso.error || !recurso.data) throw new Error("Relatórios financeiros indisponíveis no Free. Faça upgrade em Plano e uso.");
       const { data, error } = await supabase
         .from("eventos")
         .select(
@@ -45,7 +51,10 @@ function Relatorios() {
     },
   });
 
-  const exportarCsv = (eventoId: string) => {
+  const exportarCsv = async (eventoId: string) => {
+    if (!empresaId) return;
+    const recurso = await supabase.rpc("recurso_habilitado", { _empresa_id: empresaId, _recurso: "exportacao_avancada" });
+    if (recurso.error || !recurso.data) { toast.error("Exportação avançada indisponível no seu plano."); return; }
     const e = eventos.data?.find((x) => x.id === eventoId);
     if (!e) return;
     const linhas: string[][] = [
