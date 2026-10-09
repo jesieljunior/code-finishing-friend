@@ -23,13 +23,14 @@ describe("cobrança V2", () => {
     expect(valorComRepasse(100, 0.0099).cobrado).toBe(101);
     expect(valorComRepasse(1000, 0.0498).cobrado).toBe(1052.41);
   });
-  it("não considera quatro batidas como quatro participações na fatura", () => {
+  it("cobra R$2,50 apenas além das 300 participações do Pro", () => {
     expect(calcularFatura(pro, 1).excedentes).toBe(0);
     expect(calcularFatura(pro, 301).total).toBe(501.5);
   });
   it("recalcula comparação quando o admin muda as franquias", () => {
     const superior = { ...pro, participacoes_incluidas: 120 };
-    expect(pontoDeVirada(start, superior)).toBe(397);
-    expect(calcularFatura(superior, 397).total).toBeLessThanOrEqual(calcularFatura(start, 397).total);
+    expect(pontoDeVirada(start, superior)).toBe(400);
+    expect(calcularFatura(superior, 400).total).toBeLessThanOrEqual(calcularFatura(start, 400).total);
+    expect(calcularFatura(superior, 399).total).toBeGreaterThan(calcularFatura(start, 399).total);
   });
 });
