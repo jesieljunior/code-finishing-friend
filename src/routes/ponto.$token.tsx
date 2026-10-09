@@ -151,7 +151,8 @@ function PaginaPonto() {
 
   const ctx = contexto.data;
   const validos = identificado?.pontos.filter((p) => p.status !== "recusado") ?? [];
-  const proximoTipo = SEQUENCIA[validos.length] ?? null;
+  const sequencia: TipoPonto[] = ctx.pontoBasico ? ["entrada", "saida"] : SEQUENCIA;
+  const proximoTipo = sequencia[validos.length] ?? null;
 
   return (
     <main className="mx-auto max-w-md space-y-4 p-4">
@@ -229,12 +230,12 @@ function PaginaPonto() {
                     aria-label="Autorizar uso da selfie"
                   />
                   <span>
-                    Autorizo a selfie para conferência deste ponto. A supervisão poderá baixá-la, e ela será excluída após 90 dias.
+                    Autorizo a selfie para conferência deste ponto. A supervisão poderá baixá-la, e ela será excluída no prazo de retenção da agência.
                   </span>
                 </label>
               ) : null}
               <div className="grid grid-cols-2 gap-2">
-                {SEQUENCIA.map((tipo) => (
+                {sequencia.map((tipo) => (
                   <Button
                     key={tipo}
                     variant={tipo === proximoTipo ? "default" : "outline"}
