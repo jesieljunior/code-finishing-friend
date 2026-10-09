@@ -2011,6 +2011,7 @@ export type Database = {
           criado_em: string
           device_hash: string | null
           escala_id: string
+          evidencia_expira_em: string | null
           fora_horario: boolean
           foto_url: string | null
           gps_lat: number | null
@@ -2031,6 +2032,7 @@ export type Database = {
           criado_em?: string
           device_hash?: string | null
           escala_id: string
+          evidencia_expira_em?: string | null
           fora_horario?: boolean
           foto_url?: string | null
           gps_lat?: number | null
@@ -2051,6 +2053,7 @@ export type Database = {
           criado_em?: string
           device_hash?: string | null
           escala_id?: string
+          evidencia_expira_em?: string | null
           fora_horario?: boolean
           foto_url?: string | null
           gps_lat?: number | null
@@ -2394,6 +2397,7 @@ export type Database = {
           trial_ate: string
         }[]
       }
+      processar_cobranca_v2: { Args: never; Returns: undefined }
       recurso_habilitado: {
         Args: { _empresa_id: string; _recurso: string }
         Returns: boolean

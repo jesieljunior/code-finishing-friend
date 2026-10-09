@@ -71,6 +71,13 @@
       "when": 1791385757509,
       "tag": "0009_billing_v2_security_snapshots",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791574094550,
+      "tag": "0010_billing_v2_limits_evidence_cycle",
+      "breakpoints": true
     }
   ]
 }
