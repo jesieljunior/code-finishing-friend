@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { dataHora, moeda } from "@/lib/dominio";
 import { useSessao } from "@/hooks/use-sessao";
+import { carregarCobranca } from "@/lib/cobranca.functions";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
@@ -122,11 +123,13 @@ function Painel() {
   const q = useQuery({
     queryKey: ["painel", empresaId],
     enabled: Boolean(empresaId),
-    queryFn: () => carregar(empresaId!),
+    queryFn: () => { if (!empresaId) throw new Error("Agência não encontrada."); return carregar(empresaId); },
   });
+  const cobranca = useQuery({ queryKey: ["cobranca-v2", empresaId], enabled: Boolean(empresaId), queryFn: () => carregarCobranca(), refetchInterval: 30_000 });
 
   return (
     <AppShell titulo="Painel" descricao="O que precisa de atenção agora">
+      {cobranca.data ? <section className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5"><div><h2 className="font-semibold">Plano {cobranca.data.uso.plano_nome}</h2><p className="mt-1 text-sm text-muted-foreground">{cobranca.data.uso.plano_codigo === "free" ? `${cobranca.data.uso.eventos_usados} de ${cobranca.data.uso.limite_eventos} eventos usados neste ciclo` : `${cobranca.data.uso.participacoes_usadas} participações · ${cobranca.data.ciclo.participacoes_incluidas} incluídas · ${cobranca.data.estimativa.excedentes} excedentes`} · Estimativa: {moeda(cobranca.data.estimativa.total)}</p></div><Button asChild variant="outline"><Link to="/plano">Plano e upgrade</Link></Button></section> : null}
       {q.isPending ? (
         <LoadingBloco linhas={4} />
       ) : q.isError ? (
